@@ -4,16 +4,20 @@ import { useEffect, useState } from "react";
 import { Menu, Plus } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { MovementModal } from "./movement-modal";
-import type { BankAccount, CreditCard, Transaction } from "@/lib/finance/types";
+import { ProfileMenu } from "./profile-menu";
+import type { BankAccount, CreditCard, MonthlyBill, Transaction } from "@/lib/finance/types";
 
 type DashboardShellProps = {
   children: React.ReactNode;
   name: string;
+  fullName: string;
+  avatar: string;
   cards: CreditCard[];
   accounts: BankAccount[];
+  monthlyBills: MonthlyBill[];
 };
 
-export function DashboardShell({ children, name, cards, accounts }: DashboardShellProps) {
+export function DashboardShell({ children, name, fullName, avatar, cards, accounts, monthlyBills }: DashboardShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -62,9 +66,7 @@ export function DashboardShell({ children, name, cards, accounts }: DashboardShe
               <button onClick={() => { setEditingTransaction(null); setModalOpen(true); }} className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800">
                 <Plus className="size-4" /><span className="hidden sm:inline">Nova movimentação</span>
               </button>
-              <span className="grid size-10 place-items-center rounded-full bg-moss-100 text-sm font-extrabold text-moss-700">
-                {name.slice(0, 1).toUpperCase()}
-              </span>
+              <ProfileMenu name={fullName} avatar={avatar} />
             </div>
           </div>
         </header>
@@ -74,6 +76,7 @@ export function DashboardShell({ children, name, cards, accounts }: DashboardShe
         open={modalOpen}
         cards={cards}
         accounts={accounts}
+        monthlyBills={monthlyBills}
         transaction={editingTransaction}
         onClose={() => {
           setModalOpen(false);

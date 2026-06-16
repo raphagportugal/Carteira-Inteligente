@@ -7,10 +7,11 @@ import { CreditCard as CreditCardIcon, X } from "lucide-react";
 import { createTransaction, updateTransaction } from "@/app/dashboard/actions";
 import {
   CREDIT_CARD_PAYMENT_METHOD,
-  FINANCIAL_CATEGORIES,
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
   PAYMENT_METHODS,
 } from "@/lib/finance/catalogs";
-import type { BankAccount, CreditCard, Transaction, TransactionType } from "@/lib/finance/types";
+import type { BankAccount, CreditCard, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
 type MovementModalProps = {
@@ -18,6 +19,7 @@ type MovementModalProps = {
   onClose: () => void;
   cards: CreditCard[];
   accounts: BankAccount[];
+  monthlyBills: MonthlyBill[];
   transaction?: Transaction | null;
 };
 
@@ -26,12 +28,14 @@ export function MovementModal({
   onClose,
   cards,
   accounts,
+  monthlyBills,
   transaction,
 }: MovementModalProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<TransactionType>("income");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [linksMonthlyBill, setLinksMonthlyBill] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -39,6 +43,7 @@ export function MovementModal({
     if (!open) return;
     setType(transaction?.type ?? "income");
     setPaymentMethod(transaction?.payment_method ?? "");
+    setLinksMonthlyBill(Boolean(transaction?.monthly_bill_id));
     setError("");
   }, [open, transaction]);
 
@@ -47,6 +52,7 @@ export function MovementModal({
   const usesCreditCard =
     type === "expense" && paymentMethod === CREDIT_CARD_PAYMENT_METHOD;
   const today = new Date().toISOString().slice(0, 10);
+  const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
   function close() {
     if (isPending) return;
@@ -107,8 +113,8 @@ export function MovementModal({
           {transaction && <input type="hidden" name="id" value={transaction.id} />}
           <div className="grid grid-cols-2 gap-3">
             {[
-              ["income", "Receita"],
-              ["expense", "Despesa"],
+              ["income", "Entrada"],
+              ["expense", "Saída"],
             ].map(([value, label]) => (
               <label key={value} className="cursor-pointer">
                 <input
@@ -168,17 +174,14 @@ export function MovementModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold">Categoria</span>
+              <span className="mb-2 block text-sm font-semibold">Categoria <span className="font-normal text-slate-400">(opcional)</span></span>
               <select
                 name="category"
-                required
                 defaultValue={transaction?.category ?? ""}
                 className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
               >
-                <option value="" disabled>
-                  Selecione
-                </option>
-                {FINANCIAL_CATEGORIES.map((category) => (
+                <option value="">Sem categoria</option>
+                {categories.map((category) => (
                   <option key={category}>{category}</option>
                 ))}
               </select>
@@ -272,6 +275,38 @@ export function MovementModal({
                 </div>
               )}
             </label>
+          )}
+
+          {type === "expense" && (
+            <div className="rounded-xl bg-slate-50 p-4">
+              <label className="flex items-start gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={linksMonthlyBill}
+                  onChange={(event) => setLinksMonthlyBill(event.target.checked)}
+                  className="mt-1 size-4 rounded border-slate-300"
+                />
+                <span>
+                  <strong>Esta movimentação corresponde a uma mensalidade cadastrada</strong>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    Quando vinculada, a mensalidade aparece como paga no mês.
+                  </span>
+                </span>
+              </label>
+              {linksMonthlyBill && (
+                <select
+                  name="monthly_bill_id"
+                  required
+                  defaultValue={transaction?.monthly_bill_id ?? ""}
+                  className="focus-ring mt-3 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
+                >
+                  <option value="" disabled>Selecione a mensalidade</option>
+                  {monthlyBills.map((bill) => (
+                    <option key={bill.id} value={bill.id}>{bill.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           )}
 
           {error && (

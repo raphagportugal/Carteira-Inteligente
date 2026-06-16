@@ -52,8 +52,8 @@ export function TransactionsHistory({
         </select>
         <select value={type} onChange={(event) => setType(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
           <option value="">Todos os tipos</option>
-          <option value="income">Receitas</option>
-          <option value="expense">Despesas</option>
+          <option value="income">Entradas</option>
+          <option value="expense">Saídas</option>
         </select>
       </section>
 

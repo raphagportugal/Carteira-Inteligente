@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   CreditCard,
   CalendarClock,
-  CalendarRange,
   Goal,
   LayoutDashboard,
   LogOut,
@@ -24,11 +23,10 @@ const navigation = [
   { label: "Movimentações", icon: List, href: "/dashboard/movimentacoes" },
   { label: "Contas e Fluxo de Caixa", icon: WalletCards, href: "/dashboard/fluxo-de-caixa" },
   { label: "Cartões e Parcelamentos", icon: CreditCard, href: "/dashboard/cartoes" },
-  { label: "Planejamento Financeiro", icon: CalendarRange, href: "/dashboard/planejamento" },
   { label: "Mensalidades", icon: CalendarClock, href: "/dashboard/mensalidades" },
   { label: "Financiamentos e Empréstimos", icon: ReceiptText, href: "/dashboard/financiamentos" },
   { label: "Investimentos e Patrimônio", icon: TrendingUp, href: "/dashboard/investimentos" },
-  { label: "Objetivos", icon: Goal, href: "/dashboard/objetivos" },
+  { label: "Objetivos e Planejamento Fin.", icon: Goal, href: "/dashboard/objetivos" },
 ];
 
 type SidebarProps = {

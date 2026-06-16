@@ -11,6 +11,7 @@ export type Transaction = {
   transaction_date: string;
   credit_card_id: string | null;
   bank_account_id: string | null;
+  monthly_bill_id: string | null;
   cash_flow_date: string | null;
   created_at: string;
 };
@@ -70,6 +71,8 @@ export type MonthlyBill = {
   category: string;
   monthly_amount: number;
   payment_method: string;
+  bank_account_id: string | null;
+  credit_card_id: string | null;
   due_day: number;
   start_date: string;
   end_date: string | null;

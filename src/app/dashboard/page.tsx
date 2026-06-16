@@ -21,6 +21,7 @@ import {
 } from "@/components/dashboard/category-icon";
 import { addMonths, formatCurrency, getMonthRange, parseDate, dateFormatter } from "@/lib/finance/format";
 import { getInstallmentSchedule } from "@/lib/finance/installment-schedule";
+import { projectedMonthlyBillAmountInRange } from "@/lib/finance/monthly-bills";
 import { getTransactionCashFlowDate } from "@/lib/finance/transaction-cash-flow";
 import { getInvestmentPosition } from "@/lib/finance/investment-position";
 import {
@@ -139,14 +140,13 @@ export default async function DashboardPage() {
       ),
     0,
   );
-  const monthlyRecurringBills = monthlyBills
-    .filter(
-      (bill) =>
-        bill.status === "active" &&
-        bill.start_date <= end &&
-        (!bill.end_date || bill.end_date >= start),
-    )
-    .reduce((sum, bill) => sum + Number(bill.monthly_amount), 0);
+  const monthlyRecurringBills = projectedMonthlyBillAmountInRange({
+    bills: monthlyBills,
+    cardsById,
+    transactions,
+    start,
+    end,
+  });
   const committedExpenses =
     monthlyExpenses +
     monthlyInstallments +
@@ -180,17 +180,6 @@ export default async function DashboardPage() {
         (totals[transaction.category] ?? 0) + Number(transaction.amount);
       return totals;
     }, {});
-  monthlyBills
-    .filter(
-      (bill) =>
-        bill.status === "active" &&
-        bill.start_date <= end &&
-        (!bill.end_date || bill.end_date >= start),
-    )
-    .forEach((bill) => {
-      categoryTotals[bill.category] =
-        (categoryTotals[bill.category] ?? 0) + Number(bill.monthly_amount);
-    });
   const categories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
   const largestCategory = categories[0];
 
@@ -300,7 +289,7 @@ export default async function DashboardPage() {
         <SummaryCard label="Patrimônio investido" value={formatCurrency(investedAssets)} icon={TrendingUp} tone="blue" help="Soma do valor atual de todos os investimentos." />
         <SummaryCard label="Patrimônio total" value={formatCurrency(totalAssets)} icon={ShieldCheck} help="Saldo disponível mais investimentos e bens cadastrados." />
         <SummaryCard label="Despesas comprometidas" value={formatCurrency(committedExpenses)} icon={CreditCard} tone="amber" help="Despesas do mês, mensalidades, parcelas, financiamentos e empréstimos ativos." />
-        <SummaryCard label="Capacidade de poupança" value={formatCurrency(savingsCapacity)} icon={PiggyBank} help="Receitas do mês menos despesas comprometidas." />
+        <SummaryCard label="Capacidade de poupança" value={formatCurrency(savingsCapacity)} icon={PiggyBank} help="Entradas do mês menos despesas comprometidas." />
         <SummaryCard label="Objetivo principal" value={primaryGoal ? `${goalProgress}% concluído` : "Não definido"} icon={CircleDollarSign} help="Objetivo ativo com maior prioridade." />
       </section>
 
