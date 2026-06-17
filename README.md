@@ -362,3 +362,19 @@ Fin.`, na rota `/dashboard/objetivos`. A rota `/dashboard/planejamento` foi
 preservada para compatibilidade.
 
 Não há migration nova obrigatória para esta correção.
+
+## Sprint Investimentos, Saques e Objetivos
+
+Execute no SQL Editor do Supabase:
+
+[`supabase/migrations/20260617_investment_withdrawals_goal_allocations.sql`](supabase/migrations/20260617_investment_withdrawals_goal_allocations.sql)
+
+Essa migration aditiva:
+
+- adiciona `transaction_id` e `description` em `investment_contributions`;
+- cria `investment_withdrawals`;
+- cria `goal_investment_allocations`;
+- adiciona snapshot de alocações em saques para reversão precisa;
+- habilita RLS para saques e alocações.
+
+Aportes e saques agora convergem para a mesma lógica interna, tanto pela tela de Investimentos quanto pelo botão **Nova movimentação**. Ao excluir um evento, o app desfaz conta bancária, posição do investimento, fluxo de caixa e alocações de objetivos vinculadas.

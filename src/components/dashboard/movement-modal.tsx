@@ -11,7 +11,7 @@ import {
   INCOME_CATEGORIES,
   PAYMENT_METHODS,
 } from "@/lib/finance/catalogs";
-import type { BankAccount, CreditCard, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
+import type { BankAccount, CreditCard, Investment, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
 type MovementModalProps = {
@@ -20,6 +20,7 @@ type MovementModalProps = {
   cards: CreditCard[];
   accounts: BankAccount[];
   monthlyBills: MonthlyBill[];
+  investments: Investment[];
   transaction?: Transaction | null;
 };
 
@@ -29,11 +30,13 @@ export function MovementModal({
   cards,
   accounts,
   monthlyBills,
+  investments,
   transaction,
 }: MovementModalProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<TransactionType>("income");
+  const [category, setCategory] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [linksMonthlyBill, setLinksMonthlyBill] = useState(false);
   const [error, setError] = useState("");
@@ -41,8 +44,9 @@ export function MovementModal({
 
   useEffect(() => {
     if (!open) return;
-    setType(transaction?.type ?? "income");
-    setPaymentMethod(transaction?.payment_method ?? "");
+    setType(transaction?.type ??"income");
+    setCategory(transaction?.category ??"");
+    setPaymentMethod(transaction?.payment_method ??"");
     setLinksMonthlyBill(Boolean(transaction?.monthly_bill_id));
     setError("");
   }, [open, transaction]);
@@ -52,7 +56,9 @@ export function MovementModal({
   const usesCreditCard =
     type === "expense" && paymentMethod === CREDIT_CARD_PAYMENT_METHOD;
   const today = new Date().toISOString().slice(0, 10);
-  const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories = type === "income" ?INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const createsInvestmentContribution = type === "expense" && category === "Investimentos";
+  const createsInvestmentWithdrawal = type === "income" && category === "Saque de Investimento";
 
   function close() {
     if (isPending) return;
@@ -75,7 +81,7 @@ export function MovementModal({
       formRef.current?.reset();
       onClose();
       showSuccess(
-        transaction ? "Movimentação atualizada." : "Movimentação salva.",
+        transaction ?"Movimentação atualizada." : "Movimentação salva.",
       );
       router.refresh();
     });
@@ -98,12 +104,11 @@ export function MovementModal({
           <X className="size-5" />
         </button>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-moss-600">
-          {transaction ? "Editar movimentação" : "Nova movimentação"}
+          {transaction ?"Editar movimentação" : "Nova movimentação"}
         </p>
         <h2 className="mt-2 font-[var(--font-manrope)] text-2xl font-extrabold">
           {transaction
-            ? "Atualize os dados do registro"
-            : "Registre uma entrada ou saída"}
+            ? "Atualize os dados do registro" : "Registre uma entrada ou saída"}
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-500">
           Compras no cartão impactam o fluxo na data de vencimento da fatura.
@@ -160,13 +165,13 @@ export function MovementModal({
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">
-                {usesCreditCard ? "Data da compra" : "Data"}
+                {usesCreditCard ?"Data da compra" : "Data"}
               </span>
               <input
                 name="transaction_date"
                 required
                 type="date"
-                defaultValue={transaction?.transaction_date ?? today}
+                defaultValue={transaction?.transaction_date ??today}
                 className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm"
               />
             </label>
@@ -177,7 +182,8 @@ export function MovementModal({
               <span className="mb-2 block text-sm font-semibold">Categoria <span className="font-normal text-slate-400">(opcional)</span></span>
               <select
                 name="category"
-                defaultValue={transaction?.category ?? ""}
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
                 className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
               >
                 <option value="">Sem categoria</option>
@@ -207,6 +213,29 @@ export function MovementModal({
             </label>
           </div>
 
+          {(createsInvestmentContribution || createsInvestmentWithdrawal) && (
+            <div className="rounded-xl bg-slate-50 p-4">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">Investimento</span>
+                <select name="investment_id" required defaultValue="" className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm">
+                  <option value="" disabled>Selecione o investimento</option>
+                  {investments.filter((investment) => !["property", "vehicle", "business_stake", "other_asset"].includes(investment.asset_type ??investment.type)).map((investment) => (
+                    <option key={investment.id} value={investment.id}>{investment.name}</option>
+                  ))}
+                </select>
+              </label>
+              {createsInvestmentWithdrawal && (
+                <label className="mt-3 block">
+                  <span className="mb-2 block text-sm font-semibold">Nova posição remanescente</span>
+                  <input name="resulting_position" required type="number" min="0" step="0.01" className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
+                </label>
+              )}
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                A Carteira Inteligente vai atualizar conta, investimento, fluxo de caixa e objetivos vinculados.
+              </p>
+            </div>
+          )}
+
           {usesCreditCard && (
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Cartão</span>
@@ -214,7 +243,7 @@ export function MovementModal({
                 <select
                   name="credit_card_id"
                   required
-                  defaultValue={transaction?.credit_card_id ?? ""}
+                  defaultValue={transaction?.credit_card_id ??""}
                   className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
                 >
                   <option value="" disabled>
@@ -259,13 +288,13 @@ export function MovementModal({
                 <select
                   name="bank_account_id"
                   required
-                  defaultValue={transaction?.bank_account_id ?? ""}
+                  defaultValue={transaction?.bank_account_id ??""}
                   className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
                 >
                   <option value="" disabled>Selecione a conta</option>
                   {accounts.map((account) => (
                     <option key={account.id} value={account.id}>
-                      {account.bank}{account.account_number ? ` · ${account.account_number}` : ""}
+                      {account.bank}{account.account_number ?` · ${account.account_number}` : ""}
                     </option>
                   ))}
                 </select>
@@ -297,7 +326,7 @@ export function MovementModal({
                 <select
                   name="monthly_bill_id"
                   required
-                  defaultValue={transaction?.monthly_bill_id ?? ""}
+                  defaultValue={transaction?.monthly_bill_id ??""}
                   className="focus-ring mt-3 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
                 >
                   <option value="" disabled>Selecione a mensalidade</option>
@@ -328,10 +357,8 @@ export function MovementModal({
             className="focus-ring mt-2 h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending
-              ? "Salvando..."
-              : transaction
-                ? "Salvar alterações"
-                : "Salvar movimentação"}
+              ? "Salvando..." : transaction
+                ? "Salvar alterações" : "Salvar movimentação"}
           </button>
         </form>
       </div>

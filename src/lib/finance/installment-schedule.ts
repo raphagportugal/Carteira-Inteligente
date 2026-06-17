@@ -17,8 +17,8 @@ export function getFirstInstallmentDate(
   dueDay: number,
 ) {
   const purchase = new Date(`${purchaseDate}T00:00:00.000Z`);
-  const statementOffset = purchase.getUTCDate() > closingDay ? 1 : 0;
-  const dueAfterClosingOffset = dueDay <= closingDay ? 1 : 0;
+  const statementOffset = purchase.getUTCDate() > closingDay ?1 : 0;
+  const dueAfterClosingOffset = dueDay <= closingDay ?1 : 0;
   const monthOffset = statementOffset + dueAfterClosingOffset;
   return dateWithSafeDay(
     purchase.getUTCFullYear(),
@@ -52,7 +52,7 @@ export function buildInstallmentSchedule({
     );
     const amount =
       index === totalInstallments - 1
-        ? Math.round((totalAmount - baseAmount * (totalInstallments - 1)) * 100) /
+        ?Math.round((totalAmount - baseAmount * (totalInstallments - 1)) * 100) /
           100
         : baseAmount;
     entries.push({

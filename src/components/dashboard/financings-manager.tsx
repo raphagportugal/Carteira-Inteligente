@@ -64,8 +64,8 @@ const emptyPayment = (): CustomPaymentDraft => ({
 
 function labelForType(type?: FinancingType | null) {
   return (
-    FINANCING_TYPES.find((option) => option.value === (type ?? "other"))
-      ?.label ?? "Outro"
+    FINANCING_TYPES.find((option) => option.value === (type ??"other"))
+      ?.label ??"Outro"
   );
 }
 
@@ -102,7 +102,7 @@ export function FinancingsManager({
   );
   const totalFinanced = financings.reduce(
     (sum, item) =>
-      sum + Number(item.financed_amount ?? item.outstanding_balance),
+      sum + Number(item.financed_amount ??item.outstanding_balance),
     0,
   );
   const currentDebt = financings.reduce(
@@ -118,15 +118,15 @@ export function FinancingsManager({
   const monthlyPayments = financings.reduce((sum, item) => {
     const progress = getFinancingProgress(
       item,
-      paymentsByFinancing.get(item.id) ?? [],
+      paymentsByFinancing.get(item.id) ??[],
     );
     const currentPayment = progress.schedule.find(
       (entry) => entry.status === "current",
     );
-    return sum + Number(currentPayment?.amount ?? 0);
+    return sum + Number(currentPayment?.amount ??0);
   }, 0);
   const commitment =
-    monthlyIncome > 0 ? Math.round((monthlyPayments / monthlyIncome) * 100) : 0;
+    monthlyIncome > 0 ?Math.round((monthlyPayments / monthlyIncome) * 100) : 0;
 
   function openCreate() {
     setEditing(null);
@@ -139,9 +139,9 @@ export function FinancingsManager({
 
   function openEdit(item: Financing) {
     setEditing(item);
-    setSelectedType(item.type ?? "other");
-    setSelectedRateType(item.rate_type ?? "unknown");
-    const existing = paymentsByFinancing.get(item.id) ?? [];
+    setSelectedType(item.type ??"other");
+    setSelectedRateType(item.rate_type ??"unknown");
+    const existing = paymentsByFinancing.get(item.id) ??[];
     setPaymentDrafts(
       existing.length
         ? existing.map((payment) => ({
@@ -169,7 +169,7 @@ export function FinancingsManager({
   ) {
     setPaymentDrafts((current) =>
       current.map((payment, paymentIndex) =>
-        paymentIndex === index ? { ...payment, [field]: value } : payment,
+        paymentIndex === index ?{ ...payment, [field]: value } : payment,
       ),
     );
   }
@@ -202,8 +202,7 @@ export function FinancingsManager({
       setEditing(null);
       showSuccess(
         editing
-          ? "Financiamento ou empréstimo atualizado."
-          : "Financiamento ou empréstimo salvo.",
+          ? "Financiamento ou empréstimo atualizado." : "Financiamento ou empréstimo salvo.",
       );
       router.refresh();
     });
@@ -290,10 +289,10 @@ export function FinancingsManager({
 
           <section className="space-y-4">
             {financings.map((item) => {
-              const itemPayments = paymentsByFinancing.get(item.id) ?? [];
+              const itemPayments = paymentsByFinancing.get(item.id) ??[];
               const progress = getFinancingProgress(item, itemPayments);
               const financedAmount = Number(
-                item.financed_amount ?? item.outstanding_balance,
+                item.financed_amount ??item.outstanding_balance,
               );
               const cet =
                 item.estimated_monthly_rate !== null &&
@@ -390,8 +389,7 @@ export function FinancingsManager({
                         </p>
                         <p className="mt-1 text-sm font-extrabold">
                           {item.type === "custom_plan"
-                            ? "Valores personalizados"
-                            : formatCurrency(Number(item.monthly_payment))}
+                            ? "Valores personalizados" : formatCurrency(Number(item.monthly_payment))}
                         </p>
                         {rateIndex && (
                           <p className="mt-1 text-xs font-semibold text-moss-700">
@@ -405,7 +403,7 @@ export function FinancingsManager({
                         </p>
                         <p className="mt-1 text-sm font-extrabold">
                           {cet
-                            ? `${cet.monthly.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% a.m.`
+                            ?`${cet.monthly.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% a.m.`
                             : "Indisponível"}
                         </p>
                         {cet && (
@@ -468,7 +466,7 @@ export function FinancingsManager({
               <X className="size-5" />
             </button>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-moss-600">
-              {editing ? "Editar contrato" : "Novo contrato"}
+              {editing ?"Editar contrato" : "Novo contrato"}
             </p>
             <h2 className="mt-2 font-[var(--font-manrope)] text-2xl font-extrabold">
               Financiamento ou empréstimo
@@ -538,7 +536,7 @@ export function FinancingsManager({
                     min="0"
                     step="0.01"
                     defaultValue={
-                      editing?.current_outstanding_balance ?? ""
+                      editing?.current_outstanding_balance ??""
                     }
                     className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm"
                   />
@@ -574,7 +572,7 @@ export function FinancingsManager({
                     <select
                       name="rate_index"
                       required
-                      defaultValue={editing?.rate_index ?? ""}
+                      defaultValue={editing?.rate_index ??""}
                       className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
                     >
                       <option value="" disabled>
@@ -702,7 +700,7 @@ export function FinancingsManager({
                         name="start_date"
                         required
                         type="date"
-                        defaultValue={editing?.start_date ?? ""}
+                        defaultValue={editing?.start_date ??""}
                         className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm"
                       />
                     </label>
@@ -714,7 +712,7 @@ export function FinancingsManager({
                         name="end_date"
                         required
                         type="date"
-                        defaultValue={editing?.end_date ?? ""}
+                        defaultValue={editing?.end_date ??""}
                         className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm"
                       />
                     </label>
@@ -742,10 +740,8 @@ export function FinancingsManager({
                 className="focus-ring h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white disabled:opacity-60"
               >
                 {isPending
-                  ? "Salvando..."
-                  : editing
-                    ? "Salvar alterações"
-                    : "Cadastrar contrato"}
+                  ? "Salvando..." : editing
+                    ? "Salvar alterações" : "Cadastrar contrato"}
               </button>
             </form>
           </div>
@@ -755,7 +751,7 @@ export function FinancingsManager({
       {details && (
         <FinancingDetails
           financing={details}
-          customPayments={paymentsByFinancing.get(details.id) ?? []}
+          customPayments={paymentsByFinancing.get(details.id) ??[]}
           paymentStatuses={paymentStatuses.filter((status) => status.financing_id === details.id)}
           onClose={() => setDetails(null)}
         />
@@ -779,7 +775,7 @@ function FinancingDetails({
   const [pending, startTransition] = useTransition();
   const progress = getFinancingProgress(financing, customPayments);
   const financedAmount = Number(
-    financing.financed_amount ?? financing.outstanding_balance,
+    financing.financed_amount ??financing.outstanding_balance,
   );
   const cet =
     financing.estimated_monthly_rate !== null &&
@@ -858,21 +854,20 @@ function FinancingDetails({
             label="Parcela"
             value={
               financing.type === "custom_plan"
-                ? "Valores personalizados"
-                : formatCurrency(Number(financing.monthly_payment))
+                ? "Valores personalizados" : formatCurrency(Number(financing.monthly_payment))
             }
           />
           <Detail
             label="Taxa CET estimada"
             value={
               cet
-                ? `${cet.monthly.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% a.m. · ${cet.annual.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% a.a.`
+                ?`${cet.monthly.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% a.m. · ${cet.annual.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}% a.a.`
                 : "Taxa CET estimada indisponível"
             }
           />
           <Detail
             label="Índice"
-            value={labelForIndex(financing.rate_index) ?? "Não informado"}
+            value={labelForIndex(financing.rate_index) ??"Não informado"}
           />
           <Detail
             label="Período"
@@ -926,10 +921,8 @@ function FinancingDetails({
                   key={`${entry.number}-${entry.dueDate}`}
                   className={`grid grid-cols-[.7fr_1fr_1fr_.9fr] items-center gap-3 px-4 py-3 text-sm transition ${
                     paid
-                      ? "bg-emerald-50/80"
-                      : entry.status === "past"
-                        ? "bg-amber-50/70"
-                        : "bg-white"
+                      ? "bg-emerald-50/80" : entry.status === "past"
+                        ? "bg-amber-50/70" : "bg-white"
                   }`}
                 >
                   <span className="font-bold">{entry.number}</span>
@@ -949,12 +942,12 @@ function FinancingDetails({
                       <span className="grid size-5 shrink-0 place-items-center rounded-md border border-amber-300 bg-white text-transparent transition peer-checked:border-emerald-500 peer-checked:bg-emerald-500 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-moss-500 peer-focus-visible:ring-offset-2">
                         <Check className="size-3.5" strokeWidth={3} />
                       </span>
-                      <span className={`text-xs font-bold ${paid ? "text-emerald-700" : "text-amber-700"}`}>
-                        {paid ? "Paga" : "Vencida"}
+                      <span className={`text-xs font-bold ${paid ?"text-emerald-700" : "text-amber-700"}`}>
+                        {paid ?"Paga" : "Vencida"}
                       </span>
                     </label>
                   ) : (
-                    <span className={entry.status === "current" ? "font-bold text-moss-700" : "text-slate-500"}>
+                    <span className={entry.status === "current" ?"font-bold text-moss-700" : "text-slate-500"}>
                       {statusLabels[entry.status]}
                     </span>
                   )}

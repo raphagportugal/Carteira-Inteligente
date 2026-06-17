@@ -48,17 +48,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <nav className="mt-10 flex-1 space-y-1.5 overflow-y-auto pr-1">
         <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Planejamento</p>
         {navigation.map(({ label, icon: Icon, href }) => {
-          const active = href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+          const active = href === "/dashboard" ?pathname === href : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
               onClick={onClose}
               className={`focus-ring flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition ${
-                active ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                active ?"bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
-              <Icon className={`size-[18px] ${active ? "text-moss-500" : ""}`} strokeWidth={1.9} />
+              <Icon className={`size-[18px] ${active ?"text-moss-500" : ""}`} strokeWidth={1.9} />
               {label}
             </Link>
           );
@@ -69,7 +69,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           href="/dashboard/configuracoes"
           onClick={onClose}
           className={`focus-ring flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition ${
-            pathname === "/dashboard/configuracoes" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+            pathname === "/dashboard/configuracoes" ?"bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
           }`}
         >
           <Settings className="size-[18px]" /> Configurações

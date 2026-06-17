@@ -8,10 +8,12 @@ import type {
   FinancingPaymentStatus,
   FinancialPlan,
   Goal,
+  GoalInvestmentAllocation,
   IncomeForecast,
   Investment,
   InvestmentContribution,
   InvestmentValuation,
+  InvestmentWithdrawal,
   Installment,
   MonthlyBill,
   Transaction,
@@ -27,7 +29,7 @@ export async function getBankAccounts() {
     console.error("Unable to load bank accounts:", error.message);
     return [] as BankAccount[];
   }
-  return (data ?? []) as BankAccount[];
+  return (data ??[]) as BankAccount[];
 }
 
 export async function getAccountTransfers() {
@@ -40,7 +42,7 @@ export async function getAccountTransfers() {
     console.error("Unable to load account transfers:", error.message);
     return [] as AccountTransfer[];
   }
-  return (data ?? []) as AccountTransfer[];
+  return (data ??[]) as AccountTransfer[];
 }
 
 export async function getTransactions(options?: {
@@ -64,7 +66,7 @@ export async function getTransactions(options?: {
     console.error("Unable to load transactions:", error.message);
     return [] as Transaction[];
   }
-  return (data ?? []) as Transaction[];
+  return (data ??[]) as Transaction[];
 }
 
 export async function getInstallments() {
@@ -78,7 +80,7 @@ export async function getInstallments() {
     console.error("Unable to load installments:", error.message);
     return [] as Installment[];
   }
-  return (data ?? []) as Installment[];
+  return (data ??[]) as Installment[];
 }
 
 export async function getFinancings() {
@@ -92,7 +94,7 @@ export async function getFinancings() {
     console.error("Unable to load financings:", error.message);
     return [] as Financing[];
   }
-  return (data ?? []) as Financing[];
+  return (data ??[]) as Financing[];
 }
 
 export async function getFinancingCustomPayments() {
@@ -106,7 +108,7 @@ export async function getFinancingCustomPayments() {
     console.error("Unable to load financing custom payments:", error.message);
     return [] as FinancingCustomPayment[];
   }
-  return (data ?? []) as FinancingCustomPayment[];
+  return (data ??[]) as FinancingCustomPayment[];
 }
 
 export async function getFinancingPaymentStatuses() {
@@ -119,7 +121,7 @@ export async function getFinancingPaymentStatuses() {
     console.error("Unable to load financing payment statuses:", error.message);
     return [] as FinancingPaymentStatus[];
   }
-  return (data ?? []) as FinancingPaymentStatus[];
+  return (data ??[]) as FinancingPaymentStatus[];
 }
 
 export async function getFinancialPlans() {
@@ -132,7 +134,7 @@ export async function getFinancialPlans() {
     console.error("Unable to load financial plans:", error.message);
     return [] as FinancialPlan[];
   }
-  return (data ?? []) as FinancialPlan[];
+  return (data ??[]) as FinancialPlan[];
 }
 
 export async function getGoals() {
@@ -146,7 +148,7 @@ export async function getGoals() {
     console.error("Unable to load goals:", error.message);
     return [] as Goal[];
   }
-  return (data ?? []) as Goal[];
+  return (data ??[]) as Goal[];
 }
 
 export async function getCreditCards() {
@@ -160,7 +162,7 @@ export async function getCreditCards() {
     console.error("Unable to load credit cards:", error.message);
     return [] as CreditCard[];
   }
-  return (data ?? []) as CreditCard[];
+  return (data ??[]) as CreditCard[];
 }
 
 export async function getMonthlyBills() {
@@ -174,7 +176,7 @@ export async function getMonthlyBills() {
     console.error("Unable to load monthly bills:", error.message);
     return [] as MonthlyBill[];
   }
-  return (data ?? []) as MonthlyBill[];
+  return (data ??[]) as MonthlyBill[];
 }
 
 export async function getInvestments() {
@@ -188,7 +190,7 @@ export async function getInvestments() {
     console.error("Unable to load investments:", error.message);
     return [] as Investment[];
   }
-  return (data ?? []) as Investment[];
+  return (data ??[]) as Investment[];
 }
 
 export async function getInvestmentContributions() {
@@ -201,7 +203,33 @@ export async function getInvestmentContributions() {
     console.error("Unable to load investment contributions:", error.message);
     return [] as InvestmentContribution[];
   }
-  return (data ?? []) as InvestmentContribution[];
+  return (data ??[]) as InvestmentContribution[];
+}
+
+export async function getInvestmentWithdrawals() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("investment_withdrawals")
+    .select("*")
+    .order("withdrawal_date", { ascending: false });
+  if (error) {
+    console.error("Unable to load investment withdrawals:", error.message);
+    return [] as InvestmentWithdrawal[];
+  }
+  return (data ??[]) as InvestmentWithdrawal[];
+}
+
+export async function getGoalInvestmentAllocations() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("goal_investment_allocations")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Unable to load goal investment allocations:", error.message);
+    return [] as GoalInvestmentAllocation[];
+  }
+  return (data ??[]) as GoalInvestmentAllocation[];
 }
 
 export async function getInvestmentValuations() {
@@ -214,7 +242,7 @@ export async function getInvestmentValuations() {
     console.error("Unable to load investment valuations:", error.message);
     return [] as InvestmentValuation[];
   }
-  return (data ?? []) as InvestmentValuation[];
+  return (data ??[]) as InvestmentValuation[];
 }
 
 export async function getIncomeForecasts() {
@@ -228,5 +256,5 @@ export async function getIncomeForecasts() {
     console.error("Unable to load income forecasts:", error.message);
     return [] as IncomeForecast[];
   }
-  return (data ?? []) as IncomeForecast[];
+  return (data ??[]) as IncomeForecast[];
 }

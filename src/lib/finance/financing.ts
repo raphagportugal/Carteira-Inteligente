@@ -42,8 +42,8 @@ export function buildMonthlyFinancingSchedule(input: {
   const start = utcDate(input.startDate);
   const end = utcDate(input.endDate);
   const total = Math.max(1, monthDifference(start, end) + 1);
-  const dueDay = input.dueDay ?? start.getUTCDate();
-  const reference = input.referenceDate ?? new Date();
+  const dueDay = input.dueDay ??start.getUTCDate();
+  const reference = input.referenceDate ??new Date();
   const referenceMonth = `${reference.getUTCFullYear()}-${String(reference.getUTCMonth() + 1).padStart(2, "0")}`;
 
   return Array.from({ length: total }, (_, index) => {
@@ -62,10 +62,8 @@ export function buildMonthlyFinancingSchedule(input: {
       description: `Parcela ${index + 1}`,
       status:
         dueMonth === referenceMonth
-          ? "current"
-          : dueDateValue < isoDate(reference)
-            ? "past"
-            : "future",
+          ? "current" : dueDateValue < isoDate(reference)
+            ? "past" : "future",
     } satisfies FinancingScheduleEntry;
   });
 }
@@ -86,10 +84,8 @@ export function getFinancingSchedule(
         description: payment.description,
         status:
           payment.due_date.slice(0, 7) === referenceMonth
-            ? "current"
-            : payment.due_date < isoDate(referenceDate)
-              ? "past"
-              : "future",
+            ? "current" : payment.due_date < isoDate(referenceDate)
+              ? "past" : "future",
       }) satisfies FinancingScheduleEntry);
   }
 
@@ -114,12 +110,12 @@ export function getFinancingSchedule(
         dateInMonth(
           start.getUTCFullYear(),
           start.getUTCMonth() + index,
-          financing.monthly_due_day ?? 1,
+          financing.monthly_due_day ??1,
         ),
       ),
       amount: Number(financing.monthly_payment),
       description: `Parcela ${index + 1}`,
-      status: index === 0 ? "current" : "future",
+      status: index === 0 ?"current" : "future",
     }),
   ) satisfies FinancingScheduleEntry[];
 }
@@ -131,14 +127,14 @@ export function getFinancingProgress(
 ) {
   const schedule = getFinancingSchedule(financing, customPayments, referenceDate);
   const elapsed = schedule.filter((entry) => entry.status === "past").length;
-  const current = Math.min(schedule.length, elapsed + (schedule.length ? 1 : 0));
+  const current = Math.min(schedule.length, elapsed + (schedule.length ?1 : 0));
   const remaining = schedule.filter((entry) => entry.status !== "past").length;
   return {
     total: schedule.length,
     current,
     remaining,
     percentage: schedule.length
-      ? Math.min(100, Math.round((elapsed / schedule.length) * 100))
+      ?Math.min(100, Math.round((elapsed / schedule.length) * 100))
       : 0,
     schedule,
   };

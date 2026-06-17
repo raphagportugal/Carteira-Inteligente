@@ -12,8 +12,8 @@ function redirectWithMessage(
 }
 
 export async function login(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  const email = String(formData.get("email") ??"").trim();
+  const password = String(formData.get("password") ??"");
 
   if (!email || !password) {
     redirectWithMessage("/login", "error", "Preencha o e-mail e a senha.");
@@ -34,9 +34,9 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  const name = String(formData.get("name") ??"").trim();
+  const email = String(formData.get("email") ??"").trim();
+  const password = String(formData.get("password") ??"");
 
   if (!name || !email || password.length < 6) {
     redirectWithMessage(

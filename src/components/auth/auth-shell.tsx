@@ -10,7 +10,7 @@ type AuthShellProps = {
 
 const highlights = [
   "Entenda quanto você realmente tem disponível",
-  "Antecipe seu fluxo de caixa dos próximos meses",
+  "Antecipe seu fluxo de caixa dos próximos mêses",
   "Receba recomendações para decidir com segurança",
 ];
 

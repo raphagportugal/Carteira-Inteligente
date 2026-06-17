@@ -25,7 +25,7 @@ export function AuthForm({ mode, action, message, error }: AuthFormProps) {
               autoComplete="name"
               required
               minLength={2}
-              placeholder="Como podemos te chamar?"
+              placeholder="Como podemos te chamar??"
               className="focus-ring h-12 w-full rounded-xl border border-stone-200 bg-white pl-12 pr-4 text-sm placeholder:text-stone-400"
             />
           </span>
@@ -54,7 +54,7 @@ export function AuthForm({ mode, action, message, error }: AuthFormProps) {
           <input
             name="password"
             type="password"
-            autoComplete={isLogin ? "current-password" : "new-password"}
+            autoComplete={isLogin ?"current-password" : "new-password"}
             required
             minLength={6}
             placeholder="Mínimo de 6 caracteres"
@@ -79,17 +79,17 @@ export function AuthForm({ mode, action, message, error }: AuthFormProps) {
       )}
 
       <AuthSubmitButton
-        label={isLogin ? "Entrar na minha conta" : "Criar minha conta"}
-        pendingLabel={isLogin ? "Entrando..." : "Criando conta..."}
+        label={isLogin ?"Entrar na minha conta" : "Criar minha conta"}
+        pendingLabel={isLogin ?"Entrando..." : "Criando conta..."}
       />
 
       <p className="text-center text-sm text-stone-500">
-        {isLogin ? "Ainda não tem uma conta?" : "Já tem uma conta?"}{" "}
+        {isLogin ?"Ainda não tem uma conta?" : "Já tem uma conta??"}{" "}
         <Link
-          href={isLogin ? "/cadastro" : "/login"}
+          href={isLogin ?"/cadastro" : "/login"}
           className="focus-ring rounded font-bold text-moss-700 hover:text-moss-900"
         >
-          {isLogin ? "Cadastre-se" : "Entrar"}
+          {isLogin ?"Cadastre-se" : "Entrar"}
         </Link>
       </p>
     </form>

@@ -5,7 +5,7 @@ import { Menu, Plus } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { MovementModal } from "./movement-modal";
 import { ProfileMenu } from "./profile-menu";
-import type { BankAccount, CreditCard, MonthlyBill, Transaction } from "@/lib/finance/types";
+import type { BankAccount, CreditCard, Investment, MonthlyBill, Transaction } from "@/lib/finance/types";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -15,9 +15,10 @@ type DashboardShellProps = {
   cards: CreditCard[];
   accounts: BankAccount[];
   monthlyBills: MonthlyBill[];
+  investments: Investment[];
 };
 
-export function DashboardShell({ children, name, fullName, avatar, cards, accounts, monthlyBills }: DashboardShellProps) {
+export function DashboardShell({ children, name, fullName, avatar, cards, accounts, monthlyBills, investments }: DashboardShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -26,7 +27,7 @@ export function DashboardShell({ children, name, fullName, avatar, cards, accoun
   useEffect(() => {
     const openModal = (event: Event) => {
       const detail = (event as CustomEvent<Transaction | undefined>).detail;
-      setEditingTransaction(detail ?? null);
+      setEditingTransaction(detail ??null);
       setModalOpen(true);
     };
     window.addEventListener("open-movement-modal", openModal);
@@ -77,6 +78,7 @@ export function DashboardShell({ children, name, fullName, avatar, cards, accoun
         cards={cards}
         accounts={accounts}
         monthlyBills={monthlyBills}
+        investments={investments}
         transaction={editingTransaction}
         onClose={() => {
           setModalOpen(false);
