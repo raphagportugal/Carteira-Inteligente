@@ -26,7 +26,7 @@ export function SummaryCard({
   tone = "green",
   help,
 }: SummaryCardProps) {
-  const TrendIcon = trend === "down" ? ArrowDownRight : ArrowUpRight;
+  const TrendIcon = trend === "down" ?ArrowDownRight : ArrowUpRight;
 
   return (
     <article className="dashboard-card p-5" title={help}>
@@ -43,7 +43,7 @@ export function SummaryCard({
       </div>
       {change && <p
         className={`mt-5 flex items-center gap-1 text-xs font-bold ${
-          trend === "down" ? "text-amber-600" : "text-emerald-600"
+          trend === "down" ?"text-amber-600" : "text-emerald-600"
         }`}
       >
         <TrendIcon className="size-4" />

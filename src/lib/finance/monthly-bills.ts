@@ -45,7 +45,7 @@ export function getMonthlyBillOccurrence({
   const endMonth = bill.end_date?.slice(0, 7);
   const occurrenceOffset = monthsBetween(startMonth, month);
   const occurrenceDate =
-    occurrenceOffset > 0 ? addMonthsToDate(bill.start_date, occurrenceOffset) : bill.start_date;
+    occurrenceOffset > 0 ?addMonthsToDate(bill.start_date, occurrenceOffset) : bill.start_date;
   const linkedTransaction = transactions.find(
     (transaction) =>
       transaction.monthly_bill_id === bill.id &&
@@ -60,9 +60,9 @@ export function getMonthlyBillOccurrence({
     return { dueDate: occurrenceDate, cashFlowDate: occurrenceDate, status: "inactive" as const, linkedTransaction };
   }
 
-  const card = bill.credit_card_id ? cardsById.get(bill.credit_card_id) : undefined;
+  const card = bill.credit_card_id ?cardsById.get(bill.credit_card_id) : undefined;
   const cashFlowDate = card
-    ? calculateCreditCardCashFlowDate(occurrenceDate, card)
+    ?calculateCreditCardCashFlowDate(occurrenceDate, card)
     : occurrenceDate;
 
   if (linkedTransaction) {
@@ -76,7 +76,7 @@ export function getMonthlyBillOccurrence({
   return {
     dueDate: occurrenceDate,
     cashFlowDate,
-    status: month > today.slice(0, 7) ? "future" as const : "pending" as const,
+    status: month > today.slice(0, 7) ?"future" as const : "pending" as const,
     linkedTransaction,
   };
 }

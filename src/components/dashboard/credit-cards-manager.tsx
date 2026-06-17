@@ -46,13 +46,13 @@ export function CreditCardsManager({ cards }: { cards: CreditCardRecord[] }) {
       }
       setOpen(false);
       setEditing(null);
-      showSuccess(editing ? "Cartão atualizado." : "Cartão salvo.");
+      showSuccess(editing ?"Cartão atualizado." : "Cartão salvo.");
       router.refresh();
     });
   }
 
   function remove(card: CreditCardRecord) {
-    if (!window.confirm(`Excluir o cartão "${card.name}"?`)) return;
+    if (!window.confirm(`Excluir o cartão "${card.name}"? `)) return;
     startTransition(async () => {
       const result = await deleteCreditCard(card.id);
       if (!result.success) {
@@ -110,13 +110,13 @@ export function CreditCardsManager({ cards }: { cards: CreditCardRecord[] }) {
           <button className="absolute inset-0" onClick={close} aria-label="Fechar modal" />
           <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
             <button onClick={close} disabled={pending} className="focus-ring absolute right-5 top-5 grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="size-5" /></button>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-moss-600">{editing ? "Editar cartão" : "Novo cartão"}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-moss-600">{editing ?"Editar cartão" : "Novo cartão"}</p>
             <h2 className="mt-2 font-[var(--font-manrope)] text-2xl font-extrabold">Dados do cartão</h2>
             <form action={submit} className="mt-7 space-y-4">
               {editing && <input type="hidden" name="id" value={editing.id} />}
               <div className="grid gap-4 sm:grid-cols-2">
                 <label><span className="mb-2 block text-sm font-semibold">Nome</span><input name="name" required maxLength={80} defaultValue={editing?.name} placeholder="Ex.: Cartão principal" className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" /></label>
-                <label><span className="mb-2 block text-sm font-semibold">Banco</span><select name="bank" required defaultValue={editing?.bank ?? ""} className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"><option value="" disabled>Selecione</option>{BANKS.map((bank) => <option key={bank}>{bank}</option>)}</select></label>
+                <label><span className="mb-2 block text-sm font-semibold">Banco</span><select name="bank" required defaultValue={editing?.bank ??""} className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"><option value="" disabled>Selecione</option>{BANKS.map((bank) => <option key={bank}>{bank}</option>)}</select></label>
               </div>
               <label className="block"><span className="mb-2 block text-sm font-semibold">Últimos 4 dígitos</span><input name="last_four_digits" required inputMode="numeric" pattern="[0-9]{4}" maxLength={4} defaultValue={editing?.last_four_digits} placeholder="1234" className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" /></label>
               <div className="grid grid-cols-2 gap-4">
@@ -124,7 +124,7 @@ export function CreditCardsManager({ cards }: { cards: CreditCardRecord[] }) {
                 <label><span className="mb-2 block text-sm font-semibold">Dia de vencimento</span><input name="due_day" required type="number" min="1" max="31" defaultValue={editing?.due_day} className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" /></label>
               </div>
               {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-              <button disabled={pending} className="focus-ring h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white disabled:opacity-60">{pending ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar cartão"}</button>
+              <button disabled={pending} className="focus-ring h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white disabled:opacity-60">{pending ?"Salvando..." : editing ?"Salvar alterações" : "Cadastrar cartão"}</button>
             </form>
           </div>
         </div>

@@ -4,11 +4,11 @@ import type {
 } from "./types";
 
 export function getInvestmentInitialValue(investment: Investment) {
-  return Number(investment.initial_value ?? investment.current_value);
+  return Number(investment.initial_value ??investment.current_value);
 }
 
 export function getInvestmentInitialDate(investment: Investment) {
-  return investment.initial_date ?? investment.reference_date;
+  return investment.initial_date ??investment.reference_date;
 }
 
 export function getInvestmentPosition(
@@ -27,5 +27,5 @@ export function getInvestmentPosition(
 }
 
 export function getInvestmentCurrentDate(investment: Investment) {
-  return investment.current_position_date ?? investment.reference_date;
+  return investment.current_position_date ??investment.reference_date;
 }

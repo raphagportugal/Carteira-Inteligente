@@ -25,17 +25,17 @@ import { getInvestmentPosition } from "@/lib/finance/investment-position";
 import type { Goal, GoalInvestmentAllocation, Investment, InvestmentContribution } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
-type GoalVisualStatus = "Em andamento" | "Quase lÃ¡" | "ConcluÃ­do" | "AtenÃ§Ã£o";
+type GoalVisualStatus = "Em andamento" | "Quase lá" | "Concluído" | "Atenção";
 
 const priorityLabels: Record<Goal["priority"], string> = {
   low: "Baixa",
-  medium: "MÃ©dia",
+  medium: "Média",
   high: "Alta",
 };
 
 const storedStatusLabels: Record<Goal["status"], string> = {
   active: "Ativo",
-  completed: "ConcluÃ­do",
+  completed: "Concluído",
   paused: "Pausado",
 };
 
@@ -85,18 +85,18 @@ export function GoalsManager({
       if (!result.success) return setError(result.message);
       setOpen(false);
       setEditing(null);
-      setSuccess(editing ? "Objetivo atualizado." : "Objetivo criado.");
-      showSuccess(editing ? "Objetivo atualizado." : "Objetivo criado.");
+      setSuccess(editing ?"Objetivo atualizado." : "Objetivo criado.");
+      showSuccess(editing ?"Objetivo atualizado." : "Objetivo criado.");
       router.refresh();
     });
   }
 
   function remove(goal: Goal) {
-    if (!window.confirm(`Excluir o objetivo "${goal.name}"?`)) return;
+    if (!window.confirm(`Excluir o objetivo "${goal.name}"? `)) return;
     startTransition(async () => {
       const result = await deleteGoal(goal.id);
       if (!result.success) return setError(result.message);
-      setSuccess("Objetivo excluÃ­do.");
+      setSuccess("Objetivo exclu?do.");
       router.refresh();
     });
   }
@@ -106,7 +106,7 @@ export function GoalsManager({
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
         <div className="grid gap-3 sm:grid-cols-3">
           <GoalMetric label="Objetivos ativos" value={String(activeGoals)} />
-          <GoalMetric label="ConcluÃ­dos" value={String(completedGoals)} />
+          <GoalMetric label="Concluídos" value={String(completedGoals)} />
           <GoalMetric label="Progresso geral" value={`${globalProgress}%`} />
         </div>
         <button onClick={() => show()} className="focus-ring inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">
@@ -121,7 +121,7 @@ export function GoalsManager({
         <EmptyState
           icon={GoalIcon}
           title="Nenhum objetivo cadastrado"
-          description="Crie uma meta para transformar seu planejamento em progresso mensurÃ¡vel."
+          description="Crie uma meta para transformar seu planejamento em progresso mensurável."
           action={<button onClick={() => show()} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Criar objetivo</button>}
         />
       ) : (
@@ -140,7 +140,7 @@ export function GoalsManager({
               allocate={(formData) => startTransition(async () => {
                 const result = await upsertGoalInvestmentAllocation(formData);
                 if (!result.success) return setError(result.message);
-                showSuccess("AlocaÃ§Ã£o atualizada.");
+                showSuccess("Alocação atualizada.");
                 router.refresh();
               })}
             />
@@ -153,9 +153,9 @@ export function GoalsManager({
           <button className="absolute inset-0" onClick={close} />
           <div className="relative max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
             <button onClick={close} className="absolute right-5 top-5 grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100"><X className="size-5" /></button>
-            <p className="text-xs font-bold uppercase tracking-wider text-moss-600">{editing ? "Editar objetivo" : "Novo objetivo"}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-moss-600">{editing ?"Editar objetivo" : "Novo objetivo"}</p>
             <h2 className="mt-2 text-2xl font-extrabold">Plano financeiro</h2>
-            <p className="mt-2 text-sm text-slate-500">Defina o valor atual, o valor alvo e a data desejada para acompanhar a conclusÃ£o da meta.</p>
+            <p className="mt-2 text-sm text-slate-500">Defina o valor atual, o valor alvo e a data desejada para acompanhar a conclusão da meta.</p>
 
             <form action={submit} className="mt-7 space-y-4">
               {editing && <input type="hidden" name="id" value={editing.id} />}
@@ -166,7 +166,7 @@ export function GoalsManager({
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-semibold">Categoria</span>
-                  <select name="category" required defaultValue={editing?.category ?? ""} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">
+                  <select name="category" required defaultValue={editing?.category ??""} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">
                     <option value="" disabled>Selecione</option>
                     {FINANCIAL_CATEGORIES.map((item) => <option key={item} value={item}>{fixPortugueseText(item)}</option>)}
                   </select>
@@ -175,7 +175,7 @@ export function GoalsManager({
               <div className="grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="mb-2 block text-sm font-semibold">Valor atual</span>
-                  <input name="current_amount" required type="number" min="0" step="0.01" defaultValue={editing?.current_amount ?? 0} className="h-12 w-full rounded-xl border border-slate-200 px-4" />
+                  <input name="current_amount" required type="number" min="0" step="0.01" defaultValue={editing?.current_amount ??0} className="h-12 w-full rounded-xl border border-slate-200 px-4" />
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-semibold">Valor alvo</span>
@@ -189,19 +189,19 @@ export function GoalsManager({
               <div className="grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="mb-2 block text-sm font-semibold">Prioridade</span>
-                  <select name="priority" defaultValue={editing?.priority ?? "medium"} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">
+                  <select name="priority" defaultValue={editing?.priority ??"medium"} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">
                     {GOAL_PRIORITIES.map((item) => <option key={item.value} value={item.value}>{priorityLabels[item.value]}</option>)}
                   </select>
                 </label>
                 <label>
                   <span className="mb-2 block text-sm font-semibold">Status</span>
-                  <select name="status" defaultValue={editing?.status ?? "active"} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">
+                  <select name="status" defaultValue={editing?.status ??"active"} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4">
                     {GOAL_STATUSES.map((item) => <option key={item.value} value={item.value}>{storedStatusLabels[item.value]}</option>)}
                   </select>
                 </label>
               </div>
               {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-              <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white">{pending ? "Salvando..." : "Salvar objetivo"}</button>
+              <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white">{pending ?"Salvando..." : "Salvar objetivo"}</button>
             </form>
           </div>
         </div>
@@ -233,10 +233,10 @@ function GoalCard({
 }) {
   const goalAllocations = allocations.filter((allocation) => allocation.goal_id === goal.id);
   const allocatedAmount = goalAllocations.reduce(
-    (sum, allocation) => sum + (effectiveAllocationAmounts.get(allocation.id) ?? Number(allocation.allocated_amount)),
+    (sum, allocation) => sum + (effectiveAllocationAmounts.get(allocation.id) ??Number(allocation.allocated_amount)),
     0,
   );
-  const currentAmount = allocatedAmount > 0 ? allocatedAmount : Number(goal.current_amount);
+  const currentAmount = allocatedAmount > 0 ?allocatedAmount : Number(goal.current_amount);
   const targetAmount = Number(goal.target_amount);
   const missingAmount = Math.max(0, targetAmount - currentAmount);
   const progress = progressPercent(currentAmount, targetAmount);
@@ -244,34 +244,34 @@ function GoalCard({
   const statusStyle = statusStyles[visualStatus];
 
   return (
-    <article className={`rounded-3xl p-5 shadow-sm sm:p-6 ${featured ? "bg-slate-950 text-white" : "dashboard-card"}`}>
+    <article className={`rounded-3xl p-5 shadow-sm sm:p-6 ${featured ?"bg-slate-950 text-white" : "dashboard-card"}`}>
       <div className="flex items-start justify-between gap-3">
-        <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${featured ? "bg-moss-500/15 text-moss-400" : "bg-moss-50 text-moss-600"}`}>
+        <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${featured ?"bg-moss-500/15 text-moss-400" : "bg-moss-50 text-moss-600"}`}>
           <GoalIcon className="size-5" />
         </span>
         <div className="flex gap-1">
-          <button onClick={edit} className={`grid size-8 place-items-center rounded-lg ${featured ? "text-slate-300 hover:bg-white/10" : "text-slate-400 hover:bg-slate-100"}`} aria-label="Editar objetivo">
+          <button onClick={edit} className={`grid size-8 place-items-center rounded-lg ${featured ?"text-slate-300 hover:bg-white/10" : "text-slate-400 hover:bg-slate-100"}`} aria-label="Editar objetivo">
             <Pencil className="size-4" />
           </button>
-          <button onClick={remove} className={`grid size-8 place-items-center rounded-lg ${featured ? "text-slate-300 hover:bg-red-500/10 hover:text-red-300" : "text-slate-400 hover:bg-red-50 hover:text-red-500"}`} aria-label="Excluir objetivo">
+          <button onClick={remove} className={`grid size-8 place-items-center rounded-lg ${featured ?"text-slate-300 hover:bg-red-500/10 hover:text-red-300" : "text-slate-400 hover:bg-red-50 hover:text-red-500"}`} aria-label="Excluir objetivo">
             <Trash2 className="size-4" />
           </button>
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${featured ? "bg-white/10 text-slate-200" : "bg-slate-100 text-slate-600"}`}>
+        <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${featured ?"bg-white/10 text-slate-200" : "bg-slate-100 text-slate-600"}`}>
           Prioridade {priorityLabels[goal.priority]}
         </span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${statusStyle.badge}`}>
-          {visualStatus === "AtenÃ§Ã£o" ? <AlertTriangle className="size-3" /> : visualStatus === "ConcluÃ­do" ? <CheckCircle2 className="size-3" /> : <Target className="size-3" />}
+          {visualStatus === "Atenção" ?<AlertTriangle className="size-3" /> : visualStatus === "Concluído" ?<CheckCircle2 className="size-3" /> : <Target className="size-3" />}
           {visualStatus}
         </span>
       </div>
 
       <h2 className="mt-4 text-lg font-extrabold">{goal.name}</h2>
-      <p className={`mt-1 text-xs ${featured ? "text-slate-400" : "text-slate-500"}`}>
-        {fixPortugueseText(goal.category)} Â· data alvo em {dateFormatter.format(parseDate(goal.target_date))}
+      <p className={`mt-1 text-xs ${featured ?"text-slate-400" : "text-slate-500"}`}>
+        {fixPortugueseText(goal.category)} · data alvo em {dateFormatter.format(parseDate(goal.target_date))}
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -282,43 +282,55 @@ function GoalCard({
 
       <div className="mt-6">
         <div className="mb-2 flex items-center justify-between text-xs">
-          <span className={featured ? "text-slate-400" : "text-slate-500"}>ConclusÃ£o</span>
+          <span className={featured ?"text-slate-400" : "text-slate-500"}>Conclusão</span>
           <strong className={statusStyle.text}>{progress}%</strong>
         </div>
-        <div className={`h-2.5 overflow-hidden rounded-full ${featured ? "bg-white/10" : "bg-slate-100"}`}>
+        <div className={`h-2.5 overflow-hidden rounded-full ${featured ?"bg-white/10" : "bg-slate-100"}`}>
           <div className={`h-full rounded-full ${statusStyle.bar}`} style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      <div className={`mt-5 rounded-2xl border p-4 ${featured ? "border-white/10 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
-        <div className="flex items-start gap-3">
-          <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${featured ? "bg-white/10 text-moss-300" : "bg-white text-moss-600"}`}>
+      <details className={`group mt-5 rounded-2xl border p-4 ${featured ?"border-white/10 bg-white/5" : "border-slate-100 bg-slate-50"}`}>
+        <summary className="flex cursor-pointer list-none items-center gap-3">
+          <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${featured ?"bg-white/10 text-moss-300" : "bg-white text-moss-600"}`}>
             <Link2 className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className={`text-sm font-extrabold ${featured ? "text-white" : "text-slate-900"}`}>Investimentos vinculados</p>
+            <p className={`text-sm font-extrabold ${featured ?"text-white" : "text-slate-900"}`}>Investimentos vinculados</p>
+            <p className={`mt-1 text-xs ${featured ?"text-slate-400" : "text-slate-500"}`}>
+              {goalAllocations.length > 0 ? `${goalAllocations.length} vínculo(s) · clique para gerenciar` : "Nenhum investimento vinculado · clique para adicionar"}
+            </p>
+          </div>
+          <span className={`text-xs font-bold transition group-open:rotate-180 ${featured ?"text-slate-400" : "text-slate-500"}`}>⌄</span>
+        </summary>
+        <div className={`mt-4 flex items-start gap-3 border-t pt-4 ${featured ?"border-white/10" : "border-slate-100"}`}>
+          <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${featured ?"bg-white/10 text-moss-300" : "bg-white text-moss-600"}`}>
+            <Link2 className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className={`text-sm font-extrabold ${featured ?"text-white" : "text-slate-900"}`}>Investimentos vinculados</p>
             {goalAllocations.length > 0 ? (
               <div className="mt-3 space-y-2">
                 {goalAllocations.map((allocation) => {
                   const investment = investments.find((item) => item.id === allocation.investment_id);
-                  const position = investment ? getInvestmentPosition(investment, contributions) : 0;
+                  const position = investment ?getInvestmentPosition(investment, contributions) : 0;
                   const allocatedElsewhere = allocations
                     .filter((item) => item.investment_id === allocation.investment_id && item.goal_id !== goal.id)
-                    .reduce((sum, item) => sum + (effectiveAllocationAmounts.get(item.id) ?? Number(item.allocated_amount)), 0);
+                    .reduce((sum, item) => sum + (effectiveAllocationAmounts.get(item.id) ??Number(item.allocated_amount)), 0);
                   const availableForThisGoal = Math.max(0, position - allocatedElsewhere);
                   const rawAllocated = Number(allocation.allocated_amount);
                   const effectiveAllocated = Math.min(
                     availableForThisGoal,
-                    effectiveAllocationAmounts.get(allocation.id) ?? rawAllocated,
+                    effectiveAllocationAmounts.get(allocation.id) ??rawAllocated,
                   );
                   const isAboveLimit = rawAllocated > effectiveAllocated;
                   return (
-                    <div key={allocation.id} className={`rounded-xl p-3 text-xs ${featured ? "bg-white/5 text-slate-200" : "bg-white text-slate-600"}`}>
+                    <div key={allocation.id} className={`rounded-xl p-3 text-xs ${featured ?"bg-white/5 text-slate-200" : "bg-white text-slate-600"}`}>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="min-w-0 truncate font-bold">{investment?.name ?? "Investimento removido"}</span>
+                        <span className="min-w-0 truncate font-bold">{investment?.name ??"Investimento removido"}</span>
                         <strong>{formatCurrency(effectiveAllocated)}</strong>
                       </div>
-                      <p className={`mt-1 ${featured ? "text-slate-400" : "text-slate-500"}`}>Disponível para este objetivo: {formatCurrency(availableForThisGoal)}</p>
+                      <p className={`mt-1 ${featured ?"text-slate-400" : "text-slate-500"}`}>Disponível para este objetivo: {formatCurrency(availableForThisGoal)}</p>
                       {isAboveLimit && (
                         <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700">
                           Esta alocação foi ajustada ao limite disponível. Salve um valor até {formatCurrency(availableForThisGoal)} ou desvincule.
@@ -341,7 +353,7 @@ function GoalCard({
                 })}
               </div>
             ) : (
-              <p className={`mt-1 text-xs leading-5 ${featured ? "text-slate-400" : "text-slate-500"}`}>
+              <p className={`mt-1 text-xs leading-5 ${featured ?"text-slate-400" : "text-slate-500"}`}>
                 Nenhum investimento vinculado ainda.
               </p>
             )}
@@ -349,11 +361,11 @@ function GoalCard({
               <input type="hidden" name="goal_id" value={goal.id} />
               <select name="investment_id" required defaultValue="" className="h-10 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900">
                 <option value="" disabled>Selecionar investimento</option>
-                {investments.filter((investment) => !["property", "vehicle", "business_stake", "other_asset"].includes(investment.asset_type ?? investment.type)).map((investment) => {
+                {investments.filter((investment) => !["property", "vehicle", "business_stake", "other_asset"].includes(investment.asset_type ??investment.type)).map((investment) => {
                   const position = getInvestmentPosition(investment, contributions);
                   const allocated = allocations
                     .filter((allocation) => allocation.investment_id === investment.id)
-                    .reduce((sum, allocation) => sum + (effectiveAllocationAmounts.get(allocation.id) ?? Number(allocation.allocated_amount)), 0);
+                    .reduce((sum, allocation) => sum + (effectiveAllocationAmounts.get(allocation.id) ??Number(allocation.allocated_amount)), 0);
                   return <option key={investment.id} value={investment.id}>{investment.name} · livre {formatCurrency(Math.max(0, position - allocated))}</option>;
                 })}
               </select>
@@ -364,7 +376,7 @@ function GoalCard({
             </form>
           </div>
         </div>
-      </div>
+      </details>
     </article>
   );
 }
@@ -411,9 +423,9 @@ function GoalMetric({ label, value }: { label: string; value: string }) {
 
 function GoalValue({ label, value, featured }: { label: string; value: string; featured: boolean }) {
   return (
-    <div className={`rounded-2xl p-3 ${featured ? "bg-white/5" : "bg-slate-50"}`}>
-      <p className={`text-[11px] font-semibold ${featured ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
-      <p className={`mt-1 text-sm font-extrabold ${featured ? "text-white" : "text-slate-950"}`}>{value}</p>
+    <div className={`rounded-2xl p-3 ${featured ?"bg-white/5" : "bg-slate-50"}`}>
+      <p className={`text-[11px] font-semibold ${featured ?"text-slate-400" : "text-slate-500"}`}>{label}</p>
+      <p className={`mt-1 text-sm font-extrabold ${featured ?"text-white" : "text-slate-950"}`}>{value}</p>
     </div>
   );
 }
@@ -424,9 +436,9 @@ function progressPercent(current: number, target: number) {
 }
 
 function getVisualStatus(goal: Goal, progress: number): GoalVisualStatus {
-  if (!Number.isFinite(Number(goal.target_amount)) || Number(goal.target_amount) <= 0) return "AtenÃ§Ã£o";
-  if (goal.status === "completed" || progress >= 100) return "ConcluÃ­do";
-  if (progress >= 80) return "Quase lÃ¡";
+  if (!Number.isFinite(Number(goal.target_amount)) || Number(goal.target_amount) <= 0) return "Atenção";
+  if (goal.status === "completed" || progress >= 100) return "Concluído";
+  if (progress >= 80) return "Quase lá";
   return "Em andamento";
 }
 
@@ -436,17 +448,17 @@ const statusStyles: Record<GoalVisualStatus, { badge: string; bar: string; text:
     bar: "bg-blue-500",
     text: "text-blue-600",
   },
-  "Quase lÃ¡": {
+  "Quase lá": {
     badge: "bg-moss-50 text-moss-700",
     bar: "bg-moss-500",
     text: "text-moss-600",
   },
-  "ConcluÃ­do": {
+  "Concluído": {
     badge: "bg-emerald-50 text-emerald-700",
     bar: "bg-emerald-500",
     text: "text-emerald-600",
   },
-  "AtenÃ§Ã£o": {
+  "Atenção": {
     badge: "bg-amber-50 text-amber-700",
     bar: "bg-amber-500",
     text: "text-amber-600",
@@ -455,16 +467,16 @@ const statusStyles: Record<GoalVisualStatus, { badge: string; bar: string; text:
 
 function fixPortugueseText(value: string) {
   return value
-    .replaceAll("Cart\u00c3\u00a3o", "CartÃ£o")
-    .replaceAll("cr\u00c3\u00a9dito", "crÃ©dito")
-    .replaceAll("d\u00c3\u00a9bito", "dÃ©bito")
-    .replaceAll("D\u00c3\u00a9bito", "DÃ©bito")
-    .replaceAll("autom\u00c3\u00a1tico", "automÃ¡tico")
-    .replaceAll("Sa\u00c3\u00bade", "SaÃºde")
-    .replaceAll("Educa\u00c3\u00a7\u00c3\u00a3o", "EducaÃ§Ã£o")
-    .replaceAll("Alimenta\u00c3\u00a7\u00c3\u00a3o", "AlimentaÃ§Ã£o")
-    .replaceAll("Servi\u00c3\u00a7os", "ServiÃ§os")
-    .replaceAll("Comiss\u00c3\u00a3o", "ComissÃ£o")
-    .replaceAll("Distribui\u00c3\u00a7\u00c3\u00a3o", "DistribuiÃ§Ã£o")
-    .replaceAll("Pr\u00c3\u00b3-Labore", "PrÃ³-Labore");
+    .replaceAll("Cart\u00c3\u00a3o", "Cartão")
+    .replaceAll("cr\u00c3\u00a9dito", "crédito")
+    .replaceAll("d\u00c3\u00a9bito", "débito")
+    .replaceAll("D\u00c3\u00a9bito", "D?bito")
+    .replaceAll("autom\u00c3\u00a1tico", "autom?tico")
+    .replaceAll("Sa\u00c3\u00bade", "Sa?de")
+    .replaceAll("Educa\u00c3\u00a7\u00c3\u00a3o", "Educa??o")
+    .replaceAll("Alimenta\u00c3\u00a7\u00c3\u00a3o", "Alimenta??o")
+    .replaceAll("Servi\u00c3\u00a7os", "Servi?os")
+    .replaceAll("Comiss\u00c3\u00a3o", "Comiss?o")
+    .replaceAll("Distribui\u00c3\u00a7\u00c3\u00a3o", "Distribui??o")
+    .replaceAll("Pr\u00c3\u00b3-Labore", "Pr?-Labore");
 }

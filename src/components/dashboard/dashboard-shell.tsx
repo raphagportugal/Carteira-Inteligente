@@ -27,7 +27,7 @@ export function DashboardShell({ children, name, fullName, avatar, cards, accoun
   useEffect(() => {
     const openModal = (event: Event) => {
       const detail = (event as CustomEvent<Transaction | undefined>).detail;
-      setEditingTransaction(detail ?? null);
+      setEditingTransaction(detail ??null);
       setModalOpen(true);
     };
     window.addEventListener("open-movement-modal", openModal);

@@ -26,7 +26,7 @@ const capabilities = [
     icon: CalendarRange,
     title: "Fluxo de caixa futuro",
     description:
-      "Antecipe os próximos meses e entenda o impacto de cada decisão antes de tomá-la.",
+      "Antecipe os próximos mêses e entenda o impacto de cada decisão antes de tomá-la.",
   },
   {
     icon: CreditCard,
@@ -200,7 +200,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="space-y-4">
-                {["Conecte sua realidade financeira", "Visualize os próximos meses", "Receba recomendações claras"].map((step, index) => (
+                {["Conecte sua realidade financeira", "Visualize os próximos mêses", "Receba recomendações claras"].map((step, index) => (
                   <div key={step} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-5">
                     <span className="grid size-9 shrink-0 place-items-center rounded-full bg-moss-500 font-bold text-slate-950">{index + 1}</span>
                     <span className="font-semibold">{step}</span>

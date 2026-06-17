@@ -10,11 +10,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   const fullName = typeof user.user_metadata?.name === "string"
-    ? user.user_metadata.name
+    ?user.user_metadata.name
     : "Investidor";
   const name = fullName.split(" ")[0] || "Investidor";
   const avatar = typeof user.user_metadata?.avatar === "string"
-    ? user.user_metadata.avatar
+    ?user.user_metadata.avatar
     : "teal";
   const [cards, accounts, monthlyBills, investments] = await Promise.all([
     getCreditCards(),

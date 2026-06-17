@@ -34,7 +34,7 @@ export function TransactionsHistory({
     );
     return filtered.reduce<Record<string, Transaction[]>>((result, item) => {
       const key = item.transaction_date.slice(0, 7);
-      result[key] = [...(result[key] ?? []), item];
+      result[key] = [...(result[key] ??[]), item];
       return result;
     }, {});
   }, [month, search, transactions, type]);
@@ -47,7 +47,7 @@ export function TransactionsHistory({
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por descrição" className="h-11 w-full rounded-xl border border-slate-200 pl-10 pr-4 text-sm" />
         </label>
         <select value={month} onChange={(event) => setMonth(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
-          <option value="">Todos os meses</option>
+          <option value="">Todos os mêses</option>
           {months.map((value) => <option key={value} value={value}>{formatMonth(value)}</option>)}
         </select>
         <select value={type} onChange={(event) => setType(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm">
@@ -69,20 +69,20 @@ export function TransactionsHistory({
               <div className="dashboard-card divide-y divide-slate-100 px-4 sm:px-6">
                 {items.map((transaction) => {
                   const income = transaction.type === "income";
-                  const card = transaction.credit_card_id ? cardsById.get(transaction.credit_card_id) : undefined;
-                  const account = transaction.bank_account_id ? accountsById.get(transaction.bank_account_id) : undefined;
+                  const card = transaction.credit_card_id ?cardsById.get(transaction.credit_card_id) : undefined;
+                  const account = transaction.bank_account_id ?accountsById.get(transaction.bank_account_id) : undefined;
                   return <div key={transaction.id} className="flex flex-wrap items-center gap-3 py-4 sm:flex-nowrap">
-                    <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${income ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}><CategoryIcon category={transaction.category} /></span>
+                    <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${income ?"bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}><CategoryIcon category={transaction.category} /></span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold">{transaction.description}</p>
                       <p className="mt-0.5 text-xs text-slate-400">
                         {dateFormatter.format(parseDate(transaction.transaction_date))} · {transaction.category}
-                        {card ? ` · ${card.name} final ${card.last_four_digits}` : ""}
-                        {account ? ` · ${account.bank}` : ""}
+                        {card ?` · ${card.name} final ${card.last_four_digits}` : ""}
+                        {account ?` · ${account.bank}` : ""}
                       </p>
                     </div>
-                    <p className={`text-sm font-extrabold ${income ? "text-emerald-600" : "text-slate-900"}`}>
-                      {income ? "+" : "-"} {formatCurrency(Number(transaction.amount))}
+                    <p className={`text-sm font-extrabold ${income ?"text-emerald-600" : "text-slate-900"}`}>
+                      {income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}
                     </p>
                     <TransactionActions transaction={transaction} />
                   </div>;

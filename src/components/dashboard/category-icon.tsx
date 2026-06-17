@@ -85,15 +85,15 @@ const investmentIcons: Record<InvestmentType, LucideIcon> = {
 };
 
 export function getCategoryIcon(category: string) {
-  return categoryIcons[normalize(category)] ?? CircleDollarSign;
+  return categoryIcons[normalize(category)] ??CircleDollarSign;
 }
 
 export function getFinancingTypeIcon(type?: FinancingType | null) {
-  return financingIcons[type ?? "other"] ?? CircleDollarSign;
+  return financingIcons[type ??"other"] ??CircleDollarSign;
 }
 
 export function getInvestmentTypeIcon(type: InvestmentType) {
-  return investmentIcons[type] ?? CircleDollarSign;
+  return investmentIcons[type] ??CircleDollarSign;
 }
 
 export function CategoryIcon({ category }: { category: string }) {

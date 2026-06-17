@@ -59,32 +59,32 @@ const validBanks = new Set<string>(BANKS);
 const INVESTMENT_CONTRIBUTION_CATEGORY = "Investimentos";
 const INVESTMENT_WITHDRAWAL_CATEGORY = "Saque de Investimento";
 const TRANSFER_PAYMENT_METHOD =
-  PAYMENT_METHODS.find((method) => method.includes("Transfer")) ?? "TransferÃªncia";
+  PAYMENT_METHODS.find((method) => method.includes("Transfer")) ??"Transfer?ncia";
 
 function requiredText(formData: FormData, key: string) {
-  return String(formData.get(key) ?? "").trim();
+  return String(formData.get(key) ??"").trim();
 }
 
 function positiveNumber(formData: FormData, key: string) {
   const value = Number(formData.get(key));
-  return Number.isFinite(value) && value > 0 ? value : null;
+  return Number.isFinite(value) && value > 0 ?value : null;
 }
 
 function nonNegativeNumber(formData: FormData, key: string) {
   const value = Number(formData.get(key));
-  return Number.isFinite(value) && value >= 0 ? value : null;
+  return Number.isFinite(value) && value >= 0 ?value : null;
 }
 
 function optionalNonNegativeNumber(formData: FormData, key: string) {
   const raw = requiredText(formData, key);
   if (!raw) return null;
   const value = Number(raw);
-  return Number.isFinite(value) && value >= 0 ? value : undefined;
+  return Number.isFinite(value) && value >= 0 ?value : undefined;
 }
 
 function positiveInteger(formData: FormData, key: string) {
   const value = Number(formData.get(key));
-  return Number.isInteger(value) && value > 0 ? value : null;
+  return Number.isInteger(value) && value > 0 ?value : null;
 }
 
 function validDate(value: string) {
@@ -95,7 +95,7 @@ function validDate(value: string) {
 
 function dayOfMonth(formData: FormData, key: string) {
   const value = Number(formData.get(key));
-  return Number.isInteger(value) && value >= 1 && value <= 31 ? value : null;
+  return Number.isInteger(value) && value >= 1 && value <= 31 ?value : null;
 }
 
 async function getAuthenticatedContext() {
@@ -158,7 +158,7 @@ function transactionBalanceEffect(transaction: {
 }) {
   if (!transaction.bank_account_id) return 0;
   return transaction.type === "income"
-    ? Number(transaction.amount)
+    ?Number(transaction.amount)
     : -Number(transaction.amount);
 }
 
@@ -236,8 +236,8 @@ async function transactionPayload(
     category,
     payment_method: paymentMethod,
     transaction_date: transactionDate,
-    credit_card_id: usesCreditCard ? creditCardId : null,
-    bank_account_id: usesCreditCard ? null : bankAccountId,
+    credit_card_id: usesCreditCard ?creditCardId : null,
+    bank_account_id: usesCreditCard ?null : bankAccountId,
     monthly_bill_id: monthlyBillId || null,
     cash_flow_date: cashFlowDate,
   };
@@ -272,7 +272,7 @@ async function currentInvestmentPosition(
   return {
     id: data.id as string,
     name: data.name as string,
-    position: Number(data.current_position ?? data.current_value ?? 0),
+    position: Number(data.current_position ??data.current_value ??0),
   };
 }
 
@@ -295,7 +295,7 @@ async function createInvestmentContributionEvent({
     .eq("user_id", userId)
     .maybeSingle();
   if (!investment || accountError || !account) {
-    return { success: false, message: "Investimento ou conta invÃ¡lida." };
+    return { success: false, message: "Investimento ou conta inv?lida." };
   }
 
   if (!accountAlreadyAdjusted && !(await adjustAccountBalance(supabase, userId, bankAccountId, -amount))) {
@@ -308,7 +308,7 @@ async function createInvestmentContributionEvent({
       investment_id: investmentId,
       bank_account_id: bankAccountId,
       user_id: userId,
-      transaction_id: transactionId ?? null,
+      transaction_id: transactionId ??null,
       amount,
       contribution_date: date,
       impacts_cash_flow: true,
@@ -365,18 +365,18 @@ async function createInvestmentWithdrawalEvent({
     .eq("investment_id", investmentId)
     .eq("user_id", userId);
   if (!investment || accountError || !account) {
-    return { success: false, message: "Investimento ou conta invÃ¡lida." };
+    return { success: false, message: "Investimento ou conta inv?lida." };
   }
   if (allocationsError) return databaseError(`Unable to load goal allocations: ${allocationsError.message}`);
   if (resultingPosition > investment.position) {
-    return { success: false, message: "A nova posiÃ§Ã£o nÃ£o pode ser maior que a posiÃ§Ã£o atual do investimento." };
+    return { success: false, message: "A nova posi??o não pode ser maior que a posi??o atual do investimento." };
   }
 
   if (!accountAlreadyAdjusted && !(await adjustAccountBalance(supabase, userId, bankAccountId, amount))) {
     return databaseError("Unable to credit withdrawal account.");
   }
 
-  const allocationSnapshot = (allocations ?? []).map((allocation) => ({
+  const allocationSnapshot = (allocations ??[]).map((allocation) => ({
     goal_id: allocation.goal_id,
     investment_id: allocation.investment_id,
     allocated_amount: Number(allocation.allocated_amount),
@@ -387,7 +387,7 @@ async function createInvestmentWithdrawalEvent({
       investment_id: investmentId,
       bank_account_id: bankAccountId,
       user_id: userId,
-      transaction_id: transactionId ?? null,
+      transaction_id: transactionId ??null,
       amount,
       previous_position: investment.position,
       resulting_position: resultingPosition,
@@ -418,9 +418,9 @@ async function createInvestmentWithdrawalEvent({
     return databaseError(`Unable to update investment position: ${positionError.message}`);
   }
 
-  const ratio = investment.position > 0 ? Math.max(0, Math.min(1, resultingPosition / investment.position)) : 0;
+  const ratio = investment.position > 0 ?Math.max(0, Math.min(1, resultingPosition / investment.position)) : 0;
   const allocationResults = await Promise.all(
-    (allocations ?? []).map((allocation) => {
+    (allocations ??[]).map((allocation) => {
       const nextAmount = Math.round(Number(allocation.allocated_amount) * ratio * 100) / 100;
       if (nextAmount <= 0) {
         return supabase
@@ -468,14 +468,14 @@ async function enforceInvestmentAllocationLimit(
 
   if (error) return databaseError(`Unable to revalidate goal allocations: ${error.message}`);
 
-  const totalAllocated = (allocations ?? []).reduce(
+  const totalAllocated = (allocations ??[]).reduce(
     (sum, allocation) => sum + Number(allocation.allocated_amount),
     0,
   );
   let excess = Math.round((totalAllocated - positionLimit) * 100) / 100;
   if (excess <= 0) return { success: true };
 
-  const newestFirst = [...(allocations ?? [])].sort(
+  const newestFirst = [...(allocations ??[])].sort(
     (a, b) => Date.parse(String(b.created_at)) - Date.parse(String(a.created_at)),
   );
 
@@ -521,8 +521,8 @@ async function deleteInvestmentContributionEvent(
     .eq("user_id", userId)
     .maybeSingle();
   if (error) return databaseError(`Unable to load investment contribution: ${error.message}`);
-  if (!contribution) return { success: false, message: "Aporte nÃ£o encontrado." };
-  const currentPosition = Number(contribution.investments?.current_position ?? contribution.investments?.current_value ?? 0);
+  if (!contribution) return { success: false, message: "Aporte não encontrado." };
+  const currentPosition = Number(contribution.investments?.current_position ??contribution.investments?.current_value ??0);
   if (!accountAlreadyAdjusted && !(await adjustAccountBalance(supabase, userId, contribution.bank_account_id, Number(contribution.amount)))) {
     return databaseError("Unable to restore contribution account.");
   }
@@ -565,7 +565,7 @@ async function deleteInvestmentWithdrawalEvent(
     .eq("user_id", userId)
     .maybeSingle();
   if (error) return databaseError(`Unable to load investment withdrawal: ${error.message}`);
-  if (!withdrawal) return { success: false, message: "Saque nÃ£o encontrado." };
+  if (!withdrawal) return { success: false, message: "Saque não encontrado." };
   if (!accountAlreadyAdjusted && !(await adjustAccountBalance(supabase, userId, withdrawal.bank_account_id, -Number(withdrawal.amount)))) {
     return databaseError("Unable to reverse withdrawal account.");
   }
@@ -578,7 +578,7 @@ async function deleteInvestmentWithdrawalEvent(
   if (deleteAllocationsError) return databaseError(`Unable to reset goal allocations: ${deleteAllocationsError.message}`);
 
   const snapshot = Array.isArray(withdrawal.allocation_snapshot)
-    ? withdrawal.allocation_snapshot as Array<{ goal_id: string; investment_id: string; allocated_amount: number }>
+    ?withdrawal.allocation_snapshot as Array<{ goal_id: string; investment_id: string; allocated_amount: number }>
     : [];
   if (snapshot.length > 0) {
     const { error: restoreAllocationsError } = await supabase
@@ -603,11 +603,11 @@ async function deleteInvestmentWithdrawalEvent(
   if (deleteError) return databaseError(`Unable to delete investment withdrawal: ${deleteError.message}`);
 
   const currentPosition = Number(
-    withdrawal.investments?.current_position ?? withdrawal.investments?.current_value ?? 0,
+    withdrawal.investments?.current_position ??withdrawal.investments?.current_value ??0,
   );
   const restoredPosition =
     withdrawal.previous_position === null || typeof withdrawal.previous_position === "undefined"
-      ? currentPosition + Number(withdrawal.amount)
+      ?currentPosition + Number(withdrawal.amount)
       : Number(withdrawal.previous_position);
 
   const { error: positionError } = await supabase
@@ -631,10 +631,10 @@ async function deleteInvestmentWithdrawalEvent(
 
 export async function createTransaction(formData: FormData): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const payload = await transactionPayload(formData, supabase, user.id);
   if (!payload) {
-    return { success: false, message: "Revise os dados e selecione um cartÃ£o vÃ¡lido quando necessÃ¡rio." };
+    return { success: false, message: "Revise os dados e selecione um cartão válido quando necess?rio." };
   }
 
   const { data: transaction, error } = await supabase
@@ -686,7 +686,7 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
     if (!investmentId || resultingPosition === null || !payload.bank_account_id) {
       if (payload.bank_account_id) await adjustAccountBalance(supabase, user.id, payload.bank_account_id, -transactionBalanceEffect(payload));
       await supabase.from("transactions").delete().eq("id", transaction.id);
-      return { success: false, message: "Informe o investimento e a nova posiÃ§Ã£o apÃ³s o saque." };
+      return { success: false, message: "Informe o investimento e a nova posi??o ap?s o saque." };
     }
     const result = await createInvestmentWithdrawalEvent({
       supabase,
@@ -713,10 +713,10 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
 export async function updateTransaction(formData: FormData): Promise<ActionResult> {
   const id = requiredText(formData, "id");
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const payload = await transactionPayload(formData, supabase, user.id);
   if (!id || !payload) {
-    return { success: false, message: "Revise os dados e selecione um cartÃ£o vÃ¡lido quando necessÃ¡rio." };
+    return { success: false, message: "Revise os dados e selecione um cartão válido quando necess?rio." };
   }
 
   const { data: previous } = await supabase
@@ -725,7 +725,7 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!previous) return { success: false, message: "MovimentaÃ§Ã£o nÃ£o encontrada." };
+  if (!previous) return { success: false, message: "Movimenta??o não encontrada." };
 
   const { error } = await supabase
     .from("transactions")
@@ -757,10 +757,10 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
 }
 
 export async function deleteTransaction(id: string): Promise<ActionResult> {
-  if (!id) return { success: false, message: "MovimentaÃ§Ã£o invÃ¡lida." };
+  if (!id) return { success: false, message: "Movimenta??o inv?lida." };
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { data: previous } = await supabase
     .from("transactions")
@@ -768,7 +768,7 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!previous) return { success: false, message: "MovimentaÃ§Ã£o nÃ£o encontrada." };
+  if (!previous) return { success: false, message: "Movimenta??o não encontrada." };
   if (
     previous.bank_account_id &&
     !(await adjustAccountBalance(
@@ -901,10 +901,10 @@ async function installmentPayload(
 
 export async function createInstallment(formData: FormData): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const payload = await installmentPayload(formData, supabase, user.id);
   if (!payload) {
-    return { success: false, message: "Revise os dados da compra e o cartÃ£o selecionado." };
+    return { success: false, message: "Revise os dados da compra e o cartão selecionado." };
   }
 
   const { error } = await supabase
@@ -919,10 +919,10 @@ export async function createInstallment(formData: FormData): Promise<ActionResul
 export async function updateInstallment(formData: FormData): Promise<ActionResult> {
   const id = requiredText(formData, "id");
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const payload = await installmentPayload(formData, supabase, user.id);
   if (!id || !payload) {
-    return { success: false, message: "Revise os dados da compra e o cartÃ£o selecionado." };
+    return { success: false, message: "Revise os dados da compra e o cartão selecionado." };
   }
 
   const { error } = await supabase
@@ -937,10 +937,10 @@ export async function updateInstallment(formData: FormData): Promise<ActionResul
 }
 
 export async function deleteInstallment(id: string): Promise<ActionResult> {
-  if (!id) return { success: false, message: "Parcelamento invÃ¡lido." };
+  if (!id) return { success: false, message: "Parcelamento inválido." };
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("installments")
@@ -968,9 +968,9 @@ function customPaymentsPayload(formData: FormData) {
     const normalized = payments.map((payment) => {
       if (!payment || typeof payment !== "object") return null;
       const item = payment as Record<string, unknown>;
-      const dueDate = String(item.due_date ?? "");
+      const dueDate = String(item.due_date ??"");
       const amount = Number(item.amount);
-      const description = String(item.description ?? "").trim();
+      const description = String(item.description ??"").trim();
       if (
         !validDate(dueDate) ||
         !Number.isFinite(amount) ||
@@ -1021,12 +1021,12 @@ function financingPayload(formData: FormData) {
     return null;
   }
 
-  const startDate = isCustom ? customPayments[0].due_date : startDateInput;
+  const startDate = isCustom ?customPayments[0].due_date : startDateInput;
   const endDate = isCustom
-    ? customPayments[customPayments.length - 1].due_date
+    ?customPayments[customPayments.length - 1].due_date
     : endDateInput;
   const monthlyPayment = isCustom
-    ? customPayments[0].amount
+    ?customPayments[0].amount
     : monthlyPaymentInput;
 
   if (
@@ -1039,7 +1039,7 @@ function financingPayload(formData: FormData) {
   }
 
   const totalInstallments = isCustom
-    ? customPayments.length
+    ?customPayments.length
     : buildMonthlyFinancingSchedule({
         startDate,
         endDate,
@@ -1047,15 +1047,14 @@ function financingPayload(formData: FormData) {
       }).length;
   const today = new Date().toISOString().slice(0, 10);
   const remainingMonths = isCustom
-    ? customPayments.filter((payment) => payment.due_date >= today).length
+    ?customPayments.filter((payment) => payment.due_date >= today).length
     : buildMonthlyFinancingSchedule({
         startDate,
         endDate,
         monthlyPayment,
       }).filter((payment) => payment.dueDate >= today).length;
   const cet = isCustom
-    ? null
-    : estimateCet(
+    ? null : estimateCet(
     financedAmount,
     monthlyPayment,
     totalInstallments,
@@ -1067,30 +1066,30 @@ function financingPayload(formData: FormData) {
       type,
       financed_amount: financedAmount,
       current_outstanding_balance: currentBalance,
-      outstanding_balance: currentBalance ?? financedAmount,
+      outstanding_balance: currentBalance ??financedAmount,
       monthly_payment: monthlyPayment,
       start_date: startDate,
       end_date: endDate,
       monthly_due_day: Number(startDate.slice(8, 10)),
       rate_type: rateType,
-      rate_index: rateType === "variable" ? rateIndexValue : null,
-      estimated_monthly_rate: cet?.monthly ?? null,
-      estimated_rate: cet?.annual ?? null,
-      interest_rate: cet?.annual ?? 0,
+      rate_index: rateType === "variable" ?rateIndexValue : null,
+      estimated_monthly_rate: cet?.monthly ??null,
+      estimated_rate: cet?.annual ??null,
+      interest_rate: cet?.annual ??0,
       remaining_months: remainingMonths,
     },
-    customPayments: isCustom ? customPayments : [],
+    customPayments: isCustom ?customPayments : [],
   };
 }
 
 export async function createFinancing(formData: FormData): Promise<ActionResult> {
   const parsed = financingPayload(formData);
   if (!parsed) {
-    return { success: false, message: "Preencha todos os campos com valores vÃ¡lidos." };
+    return { success: false, message: "Preencha todos os campos com valores válidos." };
   }
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { data, error } = await supabase
     .from("financings")
@@ -1122,11 +1121,11 @@ export async function updateFinancing(formData: FormData): Promise<ActionResult>
   const id = requiredText(formData, "id");
   const parsed = financingPayload(formData);
   if (!id || !parsed) {
-    return { success: false, message: "Preencha todos os campos com valores vÃ¡lidos." };
+    return { success: false, message: "Preencha todos os campos com valores válidos." };
   }
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("financings")
@@ -1162,10 +1161,10 @@ export async function updateFinancing(formData: FormData): Promise<ActionResult>
 }
 
 export async function deleteFinancing(id: string): Promise<ActionResult> {
-  if (!id) return { success: false, message: "Financiamento invÃ¡lido." };
+  if (!id) return { success: false, message: "Financiamento inválido." };
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("financings")
@@ -1207,11 +1206,11 @@ function creditCardPayload(formData: FormData) {
 export async function createCreditCard(formData: FormData): Promise<ActionResult> {
   const payload = creditCardPayload(formData);
   if (!payload) {
-    return { success: false, message: "Preencha os dados do cartÃ£o corretamente." };
+    return { success: false, message: "Preencha os dados do cartão corretamente." };
   }
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("credit_cards")
@@ -1226,11 +1225,11 @@ export async function updateCreditCard(formData: FormData): Promise<ActionResult
   const id = requiredText(formData, "id");
   const payload = creditCardPayload(formData);
   if (!id || !payload) {
-    return { success: false, message: "Preencha os dados do cartÃ£o corretamente." };
+    return { success: false, message: "Preencha os dados do cartão corretamente." };
   }
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("credit_cards")
@@ -1244,10 +1243,10 @@ export async function updateCreditCard(formData: FormData): Promise<ActionResult
 }
 
 export async function deleteCreditCard(id: string): Promise<ActionResult> {
-  if (!id) return { success: false, message: "CartÃ£o invÃ¡lido." };
+  if (!id) return { success: false, message: "Cartão inválido." };
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("credit_cards")
@@ -1258,7 +1257,7 @@ export async function deleteCreditCard(id: string): Promise<ActionResult> {
   if (error?.code === "23503") {
     return {
       success: false,
-      message: "Este cartÃ£o possui parcelamentos ou movimentaÃ§Ãµes vinculadas e nÃ£o pode ser excluÃ­do.",
+      message: "Este cartão possui parcelamentos ou movimenta??es vinculadas e não pode ser exclu?do.",
     };
   }
   if (error) return databaseError(`Unable to delete credit card: ${error.message}`);
@@ -1271,8 +1270,8 @@ function monthlyBillPayload(formData: FormData) {
   const category = normalizedCategory(formData, "category");
   const monthlyAmount = positiveNumber(formData, "monthly_amount");
   const paymentMethod = requiredText(formData, "payment_method");
-  const bankAccountId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ? "" : requiredText(formData, "bank_account_id");
-  const creditCardId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ? requiredText(formData, "credit_card_id") : "";
+  const bankAccountId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ?"" : requiredText(formData, "bank_account_id");
+  const creditCardId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ?requiredText(formData, "credit_card_id") : "";
   const dueDay = dayOfMonth(formData, "due_day");
   const startDate = requiredText(formData, "start_date");
   const endDate = requiredText(formData, "end_date");
@@ -1314,7 +1313,7 @@ export async function updateUserProfile(formData: FormData): Promise<ActionResul
     return { success: false, message: "Revise os dados do perfil." };
   }
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.auth.updateUser({
     data: { ...user.user_metadata, name, avatar },
   });
@@ -1330,7 +1329,7 @@ export async function createMonthlyBill(formData: FormData): Promise<ActionResul
   }
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("monthly_bills")
@@ -1349,7 +1348,7 @@ export async function updateMonthlyBill(formData: FormData): Promise<ActionResul
   }
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("monthly_bills")
@@ -1363,10 +1362,10 @@ export async function updateMonthlyBill(formData: FormData): Promise<ActionResul
 }
 
 export async function deleteMonthlyBill(id: string): Promise<ActionResult> {
-  if (!id) return { success: false, message: "Mensalidade invÃ¡lida." };
+  if (!id) return { success: false, message: "Mensalidade inv?lida." };
 
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
 
   const { error } = await supabase
     .from("monthly_bills")
@@ -1415,7 +1414,7 @@ export async function createGoal(formData: FormData): Promise<ActionResult> {
   const payload = goalPayload(formData);
   if (!payload) return { success: false, message: "Revise os dados do objetivo." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("goals").insert({ ...payload, user_id: user.id });
   if (error) return databaseError(`Unable to create goal: ${error.message}`);
   revalidateFinancialPages();
@@ -1427,7 +1426,7 @@ export async function updateGoal(formData: FormData): Promise<ActionResult> {
   const payload = goalPayload(formData);
   if (!id || !payload) return { success: false, message: "Revise os dados do objetivo." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("goals").update(payload).eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to update goal: ${error.message}`);
   revalidateFinancialPages();
@@ -1436,7 +1435,7 @@ export async function updateGoal(formData: FormData): Promise<ActionResult> {
 
 export async function deleteGoal(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("goals").delete().eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to delete goal: ${error.message}`);
   revalidateFinancialPages();
@@ -1451,7 +1450,7 @@ export async function createBankAccount(formData: FormData): Promise<ActionResul
     return { success: false, message: "Revise os dados da conta." };
   }
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("bank_accounts").insert({
     user_id: user.id,
     bank,
@@ -1472,7 +1471,7 @@ export async function updateBankAccount(formData: FormData): Promise<ActionResul
     return { success: false, message: "Revise os dados da conta." };
   }
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase
     .from("bank_accounts")
     .update({ bank, account_number: accountNumber || null, balance })
@@ -1485,7 +1484,7 @@ export async function updateBankAccount(formData: FormData): Promise<ActionResul
 
 export async function deleteBankAccount(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase
     .from("bank_accounts")
     .delete()
@@ -1494,7 +1493,7 @@ export async function deleteBankAccount(id: string): Promise<ActionResult> {
   if (error) {
     return {
       success: false,
-      message: "Esta conta possui movimentaÃ§Ãµes vinculadas e nÃ£o pode ser excluÃ­da.",
+      message: "Esta conta possui movimenta??es vinculadas e não pode ser exclu?da.",
     };
   }
   revalidateFinancialPages();
@@ -1512,16 +1511,16 @@ export async function createAccountTransfer(formData: FormData): Promise<ActionR
     sourceAccountId === destinationAccountId ||
     amount === null ||
     !validDate(transferDate)
-  ) return { success: false, message: "Revise os dados da transferÃªncia." };
+  ) return { success: false, message: "Revise os dados da transfer?ncia." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { data: accounts } = await supabase
     .from("bank_accounts")
     .select("id")
     .in("id", [sourceAccountId, destinationAccountId])
     .eq("user_id", user.id);
   if (accounts?.length !== 2) {
-    return { success: false, message: "Selecione duas contas vÃ¡lidas." };
+    return { success: false, message: "Selecione duas contas v?lidas." };
   }
   if (!(await adjustAccountBalance(supabase, user.id, sourceAccountId, -amount))) {
     return databaseError("Unable to debit transfer source account.");
@@ -1548,14 +1547,14 @@ export async function createAccountTransfer(formData: FormData): Promise<ActionR
 
 export async function deleteAccountTransfer(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { data: transfer } = await supabase
     .from("account_transfers")
     .select("*")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!transfer) return { success: false, message: "TransferÃªncia nÃ£o encontrada." };
+  if (!transfer) return { success: false, message: "Transfer?ncia não encontrada." };
   const amount = Number(transfer.amount);
   if (!(await adjustAccountBalance(supabase, user.id, transfer.source_account_id, amount))) {
     return databaseError("Unable to restore source account.");
@@ -1582,11 +1581,9 @@ function investmentPayload(formData: FormData) {
   const currentPositionDate = requiredText(formData, "current_position_date");
   const isAsset = ["property", "vehicle", "business_stake", "other_asset"].includes(type);
   const initialValue = isAsset
-    ? currentPosition
-    : nonNegativeNumber(formData, "initial_value");
+    ? currentPosition : nonNegativeNumber(formData, "initial_value");
   const initialDate = isAsset
-    ? currentPositionDate
-    : requiredText(formData, "initial_date");
+    ? currentPositionDate : requiredText(formData, "initial_date");
   const notes = requiredText(formData, "notes");
   if (
     !name ||
@@ -1600,8 +1597,7 @@ function investmentPayload(formData: FormData) {
   return {
     name,
     type: ["property", "vehicle", "business_stake", "other_asset"].includes(type)
-      ? "other"
-      : type,
+      ? "other" : type,
     asset_type: type,
     institution,
     current_value: initialValue,
@@ -1619,7 +1615,7 @@ export async function createInvestment(formData: FormData): Promise<ActionResult
   const payload = investmentPayload(formData);
   if (!payload) return { success: false, message: "Revise os dados do investimento." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("investments").insert({ ...payload, user_id: user.id });
   if (error) return databaseError(`Unable to create investment: ${error.message}`);
   revalidateFinancialPages();
@@ -1631,7 +1627,7 @@ export async function updateInvestment(formData: FormData): Promise<ActionResult
   const payload = investmentPayload(formData);
   if (!id || !payload) return { success: false, message: "Revise os dados do investimento." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("investments").update(payload).eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to update investment: ${error.message}`);
   revalidateFinancialPages();
@@ -1640,7 +1636,7 @@ export async function updateInvestment(formData: FormData): Promise<ActionResult
 
 export async function deleteInvestment(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("investments").delete().eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to delete investment: ${error.message}`);
   revalidateFinancialPages();
@@ -1657,7 +1653,7 @@ export async function createInvestmentContribution(formData: FormData): Promise<
     return { success: false, message: "Revise os dados do aporte." };
   }
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessao expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
   const { data: transaction, error: transactionError } = await supabase
     .from("transactions")
     .insert({
@@ -1702,14 +1698,14 @@ export async function createInvestmentContribution(formData: FormData): Promise<
 
 export async function deleteInvestmentContribution(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessao expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
   const { data: contribution } = await supabase
     .from("investment_contributions")
     .select("id, transaction_id")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!contribution) return { success: false, message: "Aporte nao encontrado." };
+  if (!contribution) return { success: false, message: "Aporte não encontrado." };
   if (contribution.transaction_id) return deleteTransaction(contribution.transaction_id);
   const result = await deleteInvestmentContributionEvent(supabase, user.id, id);
   if (!result.success) return result;
@@ -1728,7 +1724,7 @@ export async function createInvestmentWithdrawal(formData: FormData): Promise<Ac
     return { success: false, message: "Revise os dados do saque." };
   }
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessao expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
   const { data: transaction, error: transactionError } = await supabase
     .from("transactions")
     .insert({
@@ -1774,14 +1770,14 @@ export async function createInvestmentWithdrawal(formData: FormData): Promise<Ac
 
 export async function deleteInvestmentWithdrawal(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessao expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
   const { data: withdrawal } = await supabase
     .from("investment_withdrawals")
     .select("id, transaction_id")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!withdrawal) return { success: false, message: "Saque nao encontrado." };
+  if (!withdrawal) return { success: false, message: "Saque não encontrado." };
   if (withdrawal.transaction_id) return deleteTransaction(withdrawal.transaction_id);
   const result = await deleteInvestmentWithdrawalEvent(supabase, user.id, id);
   if (!result.success) return result;
@@ -1794,10 +1790,10 @@ export async function upsertGoalInvestmentAllocation(formData: FormData): Promis
   const investmentId = requiredText(formData, "investment_id");
   const allocatedAmount = nonNegativeNumber(formData, "allocated_amount");
   if (!goalId || !investmentId || allocatedAmount === null) {
-    return { success: false, message: "Revise os dados da alocaÃ§Ã£o." };
+    return { success: false, message: "Revise os dados da alocação." };
   }
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const investment = await currentInvestmentPosition(supabase, user.id, investmentId);
   const { data: goal } = await supabase
     .from("goals")
@@ -1805,18 +1801,18 @@ export async function upsertGoalInvestmentAllocation(formData: FormData): Promis
     .eq("id", goalId)
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!investment || !goal) return { success: false, message: "Objetivo ou investimento invÃ¡lido." };
+  if (!investment || !goal) return { success: false, message: "Objetivo ou investimento inválido." };
   const { data: allocations, error: allocationsError } = await supabase
     .from("goal_investment_allocations")
     .select("goal_id, allocated_amount")
     .eq("investment_id", investmentId)
     .eq("user_id", user.id);
   if (allocationsError) return databaseError(`Unable to load allocations: ${allocationsError.message}`);
-  const alreadyAllocatedElsewhere = (allocations ?? [])
+  const alreadyAllocatedElsewhere = (allocations ??[])
     .filter((allocation) => allocation.goal_id !== goalId)
     .reduce((sum, allocation) => sum + Number(allocation.allocated_amount), 0);
   if (allocatedAmount > 0 && alreadyAllocatedElsewhere + allocatedAmount > investment.position) {
-    return { success: false, message: "A alocaÃ§Ã£o supera o saldo livre deste investimento." };
+    return { success: false, message: "A alocação supera o saldo livre deste investimento." };
   }
   if (allocatedAmount === 0) {
     const { error } = await supabase
@@ -1845,7 +1841,7 @@ function financialPlanPayload(formData: FormData) {
   const monthValue = requiredText(formData, "month");
   const category = requiredText(formData, "category");
   const plannedAmount = positiveNumber(formData, "planned_amount");
-  const month = /^\d{4}-\d{2}$/.test(monthValue) ? `${monthValue}-01` : "";
+  const month = /^\d{4}-\d{2}$/.test(monthValue) ?`${monthValue}-01` : "";
   if (!validDate(month) || !validCategories.has(category) || plannedAmount === null) {
     return null;
   }
@@ -1856,7 +1852,7 @@ export async function createFinancialPlan(formData: FormData): Promise<ActionRes
   const payload = financialPlanPayload(formData);
   if (!payload) return { success: false, message: "Revise os dados do planejamento." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase
     .from("financial_plans")
     .upsert({ ...payload, user_id: user.id }, { onConflict: "user_id,month,category" });
@@ -1870,7 +1866,7 @@ export async function updateFinancialPlan(formData: FormData): Promise<ActionRes
   const payload = financialPlanPayload(formData);
   if (!id || !payload) return { success: false, message: "Revise os dados do planejamento." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("financial_plans").update(payload).eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to update financial plan: ${error.message}`);
   revalidateFinancialPages();
@@ -1879,7 +1875,7 @@ export async function updateFinancialPlan(formData: FormData): Promise<ActionRes
 
 export async function deleteFinancialPlan(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("financial_plans").delete().eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to delete financial plan: ${error.message}`);
   revalidateFinancialPages();
@@ -1891,18 +1887,18 @@ export async function setFinancingPaymentPaid(
   dueDate: string,
   paid: boolean,
 ): Promise<ActionResult> {
-  if (!financingId || !validDate(dueDate)) return { success: false, message: "Parcela invÃ¡lida." };
+  if (!financingId || !validDate(dueDate)) return { success: false, message: "Parcela inv?lida." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { data: financing } = await supabase.from("financings").select("id").eq("id", financingId).eq("user_id", user.id).maybeSingle();
-  if (!financing) return { success: false, message: "Contrato invÃ¡lido." };
+  if (!financing) return { success: false, message: "Contrato inválido." };
   const { error } = await supabase.from("financing_payment_statuses").upsert(
     {
       financing_id: financingId,
       user_id: user.id,
       due_date: dueDate,
       paid,
-      paid_at: paid ? new Date().toISOString() : null,
+      paid_at: paid ?new Date().toISOString() : null,
     },
     { onConflict: "financing_id,due_date" },
   );
@@ -1918,9 +1914,9 @@ export async function markOverdueFinancingPaymentsPaid(
   const validDates = dueDates.filter(validDate);
   if (!financingId || validDates.length === 0) return { success: false, message: "Nenhuma parcela vencida." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { data: financing } = await supabase.from("financings").select("id").eq("id", financingId).eq("user_id", user.id).maybeSingle();
-  if (!financing) return { success: false, message: "Contrato invÃ¡lido." };
+  if (!financing) return { success: false, message: "Contrato inválido." };
   const now = new Date().toISOString();
   const { error } = await supabase.from("financing_payment_statuses").upsert(
     validDates.map((dueDate) => ({
@@ -1940,16 +1936,16 @@ export async function markOverdueFinancingPaymentsPaid(
 function incomeForecastPayload(formData: FormData) {
   const monthValue = requiredText(formData, "month");
   const expectedIncome = positiveNumber(formData, "expected_income");
-  const month = /^\d{4}-\d{2}$/.test(monthValue) ? `${monthValue}-01` : "";
+  const month = /^\d{4}-\d{2}$/.test(monthValue) ?`${monthValue}-01` : "";
   if (!validDate(month) || expectedIncome === null) return null;
   return { month, expected_income: expectedIncome };
 }
 
 export async function createIncomeForecast(formData: FormData): Promise<ActionResult> {
   const payload = incomeForecastPayload(formData);
-  if (!payload) return { success: false, message: "Informe um mÃªs e valor vÃ¡lidos." };
+  if (!payload) return { success: false, message: "Informe um m?s e valor válidos." };
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase
     .from("income_forecasts")
     .upsert({ ...payload, user_id: user.id }, { onConflict: "user_id,month" });
@@ -1960,7 +1956,7 @@ export async function createIncomeForecast(formData: FormData): Promise<ActionRe
 
 export async function deleteIncomeForecast(id: string): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
-  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  if (!user) return { success: false, message: "Sua sess?o expirou. Entre novamente." };
   const { error } = await supabase.from("income_forecasts").delete().eq("id", id).eq("user_id", user.id);
   if (error) return databaseError(`Unable to delete income forecast: ${error.message}`);
   revalidateFinancialPages();

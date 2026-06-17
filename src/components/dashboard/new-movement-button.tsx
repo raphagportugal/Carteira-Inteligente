@@ -13,7 +13,7 @@ export function NewMovementButton({ compact = false }: NewMovementButtonProps) {
       className="focus-ring inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
     >
       <Plus className="size-4" />
-      {compact ? "Adicionar" : "Cadastrar primeira movimentação"}
+      {compact ?"Adicionar" : "Cadastrar primeira movimentação"}
     </button>
   );
 }

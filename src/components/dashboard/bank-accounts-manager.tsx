@@ -116,7 +116,7 @@ export function BankAccountsManager({
                 </div>
                 <p className="mt-7 text-sm font-bold">{account.bank}</p>
                 <p className="mt-1 text-xs opacity-70">
-                  {account.account_number ? `Conta ${account.account_number}` : "Conta principal"}
+                  {account.account_number ?`Conta ${account.account_number}` : "Conta principal"}
                 </p>
                 <p className="mt-4 text-xl font-extrabold">{formatCurrency(Number(account.balance))}</p>
               </article>
@@ -142,7 +142,7 @@ export function BankAccountsManager({
                 <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600"><ArrowRightLeft className="size-4" /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold">
-                    {accountsById.get(transfer.source_account_id)?.bank ?? "Conta"} → {accountsById.get(transfer.destination_account_id)?.bank ?? "Conta"}
+                    {accountsById.get(transfer.source_account_id)?.bank ??"Conta"} → {accountsById.get(transfer.destination_account_id)?.bank ??"Conta"}
                   </p>
                   <p className="text-xs text-slate-400">{dateFormatter.format(parseDate(transfer.transfer_date))} · transferência interna</p>
                 </div>
@@ -167,13 +167,13 @@ export function BankAccountsManager({
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {accountOpen && (
-        <Modal title={editing ? "Editar conta" : "Nova conta"} close={() => setAccountOpen(false)}>
+        <Modal title={editing ?"Editar conta" : "Nova conta"} close={() => setAccountOpen(false)}>
           <form action={submitAccount} className="space-y-4">
             {editing && <input type="hidden" name="id" value={editing.id} />}
-            <label className="block"><span className="mb-2 block text-sm font-semibold">Banco</span><select name="bank" required defaultValue={editing?.bank ?? ""} className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{BANKS.map((bank) => <option key={bank}>{bank}</option>)}</select></label>
-            <label className="block"><span className="mb-2 block text-sm font-semibold">Número da conta (opcional)</span><input name="account_number" defaultValue={editing?.account_number ?? ""} className="h-12 w-full rounded-xl border px-4" /></label>
-            <label className="block"><span className="mb-2 block text-sm font-semibold">Saldo atual</span><input name="balance" required type="number" step="0.01" min="0" defaultValue={editing?.balance ?? 0} className="h-12 w-full rounded-xl border px-4" /></label>
-            <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ? "Salvando..." : "Salvar conta"}</button>
+            <label className="block"><span className="mb-2 block text-sm font-semibold">Banco</span><select name="bank" required defaultValue={editing?.bank ??""} className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{BANKS.map((bank) => <option key={bank}>{bank}</option>)}</select></label>
+            <label className="block"><span className="mb-2 block text-sm font-semibold">Número da conta (opcional)</span><input name="account_number" defaultValue={editing?.account_number ??""} className="h-12 w-full rounded-xl border px-4" /></label>
+            <label className="block"><span className="mb-2 block text-sm font-semibold">Saldo atual</span><input name="balance" required type="number" step="0.01" min="0" defaultValue={editing?.balance ??0} className="h-12 w-full rounded-xl border px-4" /></label>
+            <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ?"Salvando..." : "Salvar conta"}</button>
           </form>
         </Modal>
       )}
@@ -187,7 +187,7 @@ export function BankAccountsManager({
             </div>
             <label className="block"><span className="mb-2 block text-sm font-semibold">Valor</span><input name="amount" required type="number" min="0.01" step="0.01" className="h-12 w-full rounded-xl border px-4" /></label>
             <label className="block"><span className="mb-2 block text-sm font-semibold">Data</span><input name="transfer_date" required type="date" defaultValue={today} className="h-12 w-full rounded-xl border px-4" /></label>
-            <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ? "Transferindo..." : "Confirmar transferência"}</button>
+            <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ?"Transferindo..." : "Confirmar transferência"}</button>
           </form>
         </Modal>
       )}
@@ -196,7 +196,7 @@ export function BankAccountsManager({
 }
 
 function AccountSelect({ name, label, accounts }: { name: string; label: string; accounts: BankAccount[] }) {
-  return <label><span className="mb-2 block text-sm font-semibold">{label}</span><select name={name} required defaultValue="" className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.bank}{account.account_number ? ` · ${account.account_number}` : ""}</option>)}</select></label>;
+  return <label><span className="mb-2 block text-sm font-semibold">{label}</span><select name={name} required defaultValue="" className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.bank}{account.account_number ?` · ${account.account_number}` : ""}</option>)}</select></label>;
 }
 
 function Modal({ title, close, children }: { title: string; close: () => void; children: React.ReactNode }) {

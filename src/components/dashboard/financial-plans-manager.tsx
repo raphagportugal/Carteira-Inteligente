@@ -97,16 +97,16 @@ export function FinancialPlansManager({ plans }: { plans: FinancialPlan[] }) {
             <button onClick={() => setOpen(false)} className="absolute right-5 top-5">
               <X className="size-5" />
             </button>
-            <h2 className="text-2xl font-extrabold">{editing ? "Editar meta mensal" : "Nova meta mensal"}</h2>
+            <h2 className="text-2xl font-extrabold">{editing ?"Editar meta mensal" : "Nova meta mensal"}</h2>
             <form action={submit} className="mt-6 space-y-4">
               {editing && <input type="hidden" name="id" value={editing.id} />}
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold">Mês</span>
-                <input name="month" required type="month" defaultValue={editing?.month.slice(0, 7) ?? new Date().toISOString().slice(0, 7)} className="h-12 w-full rounded-xl border px-4" />
+                <input name="month" required type="month" defaultValue={editing?.month.slice(0, 7) ??new Date().toISOString().slice(0, 7)} className="h-12 w-full rounded-xl border px-4" />
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold">Categoria</span>
-                <select name="category" required defaultValue={editing?.category ?? ""} className="h-12 w-full rounded-xl border bg-white px-4">
+                <select name="category" required defaultValue={editing?.category ??""} className="h-12 w-full rounded-xl border bg-white px-4">
                   <option value="" disabled>Selecione</option>
                   {EXPENSE_CATEGORIES.map((category) => <option key={category} value={category}>{fixPortugueseText(category)}</option>)}
                 </select>
@@ -116,7 +116,7 @@ export function FinancialPlansManager({ plans }: { plans: FinancialPlan[] }) {
                 <input name="planned_amount" required type="number" min="0.01" step="0.01" defaultValue={editing?.planned_amount} className="h-12 w-full rounded-xl border px-4" />
               </label>
               {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-              <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ? "Salvando..." : "Salvar meta"}</button>
+              <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ?"Salvando..." : "Salvar meta"}</button>
             </form>
           </div>
         </div>

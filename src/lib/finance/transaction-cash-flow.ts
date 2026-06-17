@@ -17,5 +17,5 @@ export function calculateCreditCardCashFlowDate(
 export function getTransactionCashFlowDate(
   transaction: Pick<Transaction, "cash_flow_date" | "transaction_date">,
 ) {
-  return transaction.cash_flow_date ?? transaction.transaction_date;
+  return transaction.cash_flow_date ??transaction.transaction_date;
 }

@@ -19,7 +19,7 @@ export default async function GoalsPage() {
       <PageHeading
         eyebrow="Planos que ganham forma"
         title="Objetivos e Planejamento Fin."
-        description="Priorize metas, acompanhe progresso financeiro e defina limites mensais por categoria em uma ?nica vis?o."
+        description="Priorize metas, acompanhe progresso financeiro e defina limites mensais por categoria em uma ??nica vis??o."
       />
       <section className="space-y-10">
         <div>
