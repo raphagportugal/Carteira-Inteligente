@@ -4,22 +4,29 @@ import {
   ArrowRight,
   BrainCircuit,
   CircleDollarSign,
-  CreditCard,
+  Landmark,
   PiggyBank,
   ShieldCheck,
+  Target,
   TrendingUp,
   WalletCards,
+  type LucideIcon,
 } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { NewMovementButton } from "@/components/dashboard/new-movement-button";
 import { PageHeading } from "@/components/dashboard/page-heading";
-import { SummaryCard } from "@/components/dashboard/summary-card";
 import { TransactionActions } from "@/components/dashboard/transaction-actions";
 import {
   CategoryIcon,
-  FinancingTypeIcon,
 } from "@/components/dashboard/category-icon";
-import { addMonths, formatCurrency, getMonthRange, parseDate, dateFormatter } from "@/lib/finance/format";
+import {
+  addMonths,
+  compactCurrencyFormatter,
+  dateFormatter,
+  formatCurrency,
+  getMonthRange,
+  parseDate,
+} from "@/lib/finance/format";
 import { getInstallmentSchedule } from "@/lib/finance/installment-schedule";
 import { projectedMonthlyBillAmountInRange } from "@/lib/finance/monthly-bills";
 import { getTransactionCashFlowDate } from "@/lib/finance/transaction-cash-flow";
@@ -41,7 +48,10 @@ import {
   getTransactions,
 } from "@/lib/finance/queries";
 
-export const metadata: Metadata = { title: "Visão geral" };
+export const metadata: Metadata = { title: "Visao geral" };
+
+const assetTypes = new Set(["property", "vehicle", "business_stake", "other_asset"]);
+const priorityWeight = { high: 3, medium: 2, low: 1 };
 
 export default async function DashboardPage() {
   const [
@@ -75,60 +85,64 @@ export default async function DashboardPage() {
     installments.length === 0 &&
     financings.length === 0 &&
     monthlyBills.length === 0 &&
-    investments.length === 0
-    && bankAccounts.length === 0
+    investments.length === 0 &&
+    bankAccounts.length === 0
   ) {
     return (
       <>
         <PageHeading
-          eyebrow="Visão geral"
-          title="Sua vida financeira começa aqui."
-          description="Cadastre suas receitas e despesas para a Carteira Inteligente calcular seu saldo e mostrar para onde seu dinheiro está indo."
+          eyebrow="Visao geral"
+          title="Sua vida financeira comeca aqui."
+          description="Cadastre suas entradas, saidas, contas e objetivos para a Carteira Inteligente montar sua clareza financeira."
         />
         <EmptyState
           icon={WalletCards}
-          title="Ainda não há movimentações"
-          description="Registre sua primeira entrada ou saída. A partir dela, seu dashboard será atualizado automaticamente com dados reais."
+          title="Ainda nao ha dados financeiros"
+          description="Registre sua primeira movimentacao ou conta bancaria. A partir dela, sua visao executiva sera atualizada automaticamente."
           action={<NewMovementButton />}
         />
       </>
     );
   }
 
-  const { start, end } = getMonthRange();
+  const todayDate = new Date();
+  const today = todayDate.toISOString().slice(0, 10);
+  const { start, end } = getMonthRange(todayDate);
+  const previousMonthRange = getMonthRange(addMonths(new Date(Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), 1)), -1));
+  const cardsById = new Map(creditCards.map((card) => [card.id, card]));
+  const customPaymentsByFinancing = new Map(
+    financings.map((financing) => [
+      financing.id,
+      financingCustomPayments.filter((payment) => payment.financing_id === financing.id),
+    ]),
+  );
+
   const currentMonth = transactions.filter(
     (transaction) =>
       getTransactionCashFlowDate(transaction) >= start &&
       getTransactionCashFlowDate(transaction) <= end,
   );
+  const previousMonth = transactions.filter(
+    (transaction) =>
+      getTransactionCashFlowDate(transaction) >= previousMonthRange.start &&
+      getTransactionCashFlowDate(transaction) <= previousMonthRange.end,
+  );
 
-  const monthlyIncome = currentMonth
-    .filter((transaction) => transaction.type === "income")
-    .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+  const monthlyIncome = sumTransactions(currentMonth, "income");
   const monthlyExpenses = currentMonth
     .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
     .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
-  const today = new Date().toISOString().slice(0, 10);
-  const cardsById = new Map(creditCards.map((card) => [card.id, card]));
+  const previousIncome = sumTransactions(previousMonth, "income");
+  const previousExpenses = previousMonth
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
+    .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+
   const monthlyInstallments = installments.reduce((sum, installment) => {
-    const card = installment.credit_card_id
-      ? cardsById.get(installment.credit_card_id)
-      : undefined;
-    return (
-      sum +
-      getInstallmentSchedule(installment, card)
-        .filter((entry) => entry.dueDate >= start && entry.dueDate <= end)
-        .reduce((total, entry) => total + entry.amount, 0)
-    );
+    const card = installment.credit_card_id ? cardsById.get(installment.credit_card_id) : undefined;
+    return sum + getInstallmentSchedule(installment, card)
+      .filter((entry) => entry.dueDate >= start && entry.dueDate <= end)
+      .reduce((total, entry) => total + entry.amount, 0);
   }, 0);
-  const customPaymentsByFinancing = new Map(
-    financings.map((financing) => [
-      financing.id,
-      financingCustomPayments.filter(
-        (payment) => payment.financing_id === financing.id,
-      ),
-    ]),
-  );
   const monthlyFinancings = financings.reduce(
     (sum, financing) =>
       sum +
@@ -152,54 +166,72 @@ export default async function DashboardPage() {
     monthlyInstallments +
     monthlyFinancings +
     monthlyRecurringBills;
-  const centralizedCash = bankAccounts.reduce(
-    (sum, account) => sum + Number(account.balance),
+
+  const previousInstallments = installments.reduce((sum, installment) => {
+    const card = installment.credit_card_id ? cardsById.get(installment.credit_card_id) : undefined;
+    return sum + getInstallmentSchedule(installment, card)
+      .filter((entry) => entry.dueDate >= previousMonthRange.start && entry.dueDate <= previousMonthRange.end)
+      .reduce((total, entry) => total + entry.amount, 0);
+  }, 0);
+  const previousFinancings = financings.reduce(
+    (sum, financing) =>
+      sum +
+      financingAmountInMonth(
+        financing,
+        customPaymentsByFinancing.get(financing.id) ?? [],
+        previousMonthRange.start,
+        previousMonthRange.end,
+      ),
     0,
   );
+  const previousRecurringBills = projectedMonthlyBillAmountInRange({
+    bills: monthlyBills,
+    cardsById,
+    transactions,
+    start: previousMonthRange.start,
+    end: previousMonthRange.end,
+  });
+  const previousCommittedExpenses =
+    previousExpenses +
+    previousInstallments +
+    previousFinancings +
+    previousRecurringBills;
+
+  const monthlyInvested = investmentContributions
+    .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= start && item.contribution_date <= end)
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+  const previousInvested = investmentContributions
+    .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= previousMonthRange.start && item.contribution_date <= previousMonthRange.end)
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+
+  const centralizedCash = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
+  const cashLeftover = monthlyIncome - committedExpenses - monthlyInvested;
+  const previousLeftover = previousIncome - previousCommittedExpenses - previousInvested;
   const savingsCapacity = monthlyIncome - committedExpenses;
-  const patrimonyAssetTypes = new Set(["property", "vehicle", "business_stake", "other_asset"]);
-  const investedAssets = investments
-    .filter((investment) => !patrimonyAssetTypes.has(investment.asset_type ?? investment.type))
-    .reduce((sum, investment) => sum + getInvestmentPosition(
-      investment,
-      investmentContributions,
-    ), 0);
-  const registeredPatrimony = investments.reduce(
-    (sum, investment) => sum + getInvestmentPosition(
-      investment,
-      investmentContributions,
-    ),
-    0,
-  );
+
+  const investmentTotal = investments
+    .filter((investment) => !assetTypes.has(investment.asset_type ?? investment.type))
+    .reduce((sum, investment) => sum + getInvestmentPosition(investment, investmentContributions), 0);
+  const patrimonyOnly = investments
+    .filter((investment) => assetTypes.has(investment.asset_type ?? investment.type))
+    .reduce((sum, investment) => sum + getInvestmentPosition(investment, investmentContributions), 0);
+  const registeredPatrimony = investmentTotal + patrimonyOnly;
   const totalAssets = centralizedCash + registeredPatrimony;
 
-  const categoryTotals = currentMonth
-    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
-    .reduce<Record<string, number>>((totals, transaction) => {
-      totals[transaction.category] =
-        (totals[transaction.category] ?? 0) + Number(transaction.amount);
-      return totals;
-    }, {});
-  const categories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
-  const largestCategory = categories[0];
-
-  const priorityWeight = { high: 3, medium: 2, low: 1 };
-  const primaryGoal = goals
+  const activeGoals = goals
     .filter((goal) => goal.status === "active")
     .sort(
       (a, b) =>
         priorityWeight[b.priority] - priorityWeight[a.priority] ||
         a.target_date.localeCompare(b.target_date),
-    )[0];
-  const goalProgress = primaryGoal
-    ? Math.min(
-        100,
-        Math.round(
-          (Number(primaryGoal.current_amount) / Number(primaryGoal.target_amount)) *
-            100,
-        ),
-      )
-    : 0;
+    );
+  const categoryTotals = currentMonth
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
+    .reduce<Record<string, number>>((totals, transaction) => {
+      totals[transaction.category] = (totals[transaction.category] ?? 0) + Number(transaction.amount);
+      return totals;
+    }, {});
+  const categories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
 
   const ninetyDaysFromNow = new Date();
   ninetyDaysFromNow.setUTCDate(ninetyDaysFromNow.getUTCDate() + 90);
@@ -207,15 +239,10 @@ export default async function DashboardPage() {
   const futureInstallments = installments.flatMap((installment) =>
     getInstallmentSchedule(
       installment,
-      installment.credit_card_id
-        ? cardsById.get(installment.credit_card_id)
-        : undefined,
+      installment.credit_card_id ? cardsById.get(installment.credit_card_id) : undefined,
     ).filter((entry) => entry.dueDate >= today && entry.dueDate <= horizon),
   );
-  const futureInstallmentTotal = futureInstallments.reduce(
-    (sum, entry) => sum + entry.amount,
-    0,
-  );
+  const futureInstallmentTotal = futureInstallments.reduce((sum, entry) => sum + entry.amount, 0);
   const activeMonthlyTotal = monthlyBills
     .filter(
       (bill) =>
@@ -225,38 +252,361 @@ export default async function DashboardPage() {
     )
     .reduce((sum, bill) => sum + Number(bill.monthly_amount), 0);
   const financingNinetyDays = Array.from({ length: 3 }, (_, index) => {
-    const date = addMonths(
-      new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)),
-      index,
-    );
+    const date = addMonths(new Date(Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), 1)), index);
     return getMonthRange(date);
   }).reduce(
     (sum, month) =>
       sum +
-      financings
-        .reduce(
-          (monthSum, financing) =>
-            monthSum +
-            financingAmountInMonth(
-              financing,
-              customPaymentsByFinancing.get(financing.id) ?? [],
-              month.start,
-              month.end,
-            ),
-          0,
-        ),
+      financings.reduce(
+        (monthSum, financing) =>
+          monthSum +
+          financingAmountInMonth(
+            financing,
+            customPaymentsByFinancing.get(financing.id) ?? [],
+            month.start,
+            month.end,
+          ),
+        0,
+      ),
     0,
   );
+  const futureCommitments = activeMonthlyTotal * 3 + futureInstallmentTotal + financingNinetyDays;
 
-  const evolutionMonths = Array.from({ length: 6 }, (_, index) => {
-    const date = addMonths(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)), index - 5);
-    const { start: monthStart, end: monthEnd } = getMonthRange(date);
-    const net = transactions
-      .filter(
-        (transaction) =>
-          getTransactionCashFlowDate(transaction) >= monthStart &&
-          getTransactionCashFlowDate(transaction) <= monthEnd,
-      )
+  const evolution = buildPatrimonyEvolution({
+    totalAssets,
+    transactions,
+    investmentContributions,
+    currentMonthStart: new Date(Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), 1)),
+  });
+
+  const insights = buildInsights({
+    cashLeftover,
+    monthlyIncome,
+    committedExpenses,
+    futureCommitments,
+    centralizedCash,
+    monthlyInvested,
+    previousInvested,
+    activeGoalCount: activeGoals.length,
+  });
+
+  return (
+    <>
+      <PageHeading
+        eyebrow="Visao geral"
+        title="Clareza financeira para decidir melhor."
+        description="Uma leitura executiva do seu caixa, compromissos, patrimonio e objetivos com base nos dados ja cadastrados."
+      />
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <ExecutiveCard label="Caixa atual" value={formatCurrency(centralizedCash)} icon={WalletCards} tone="slate" help="Soma atual dos saldos de todas as contas bancarias." />
+        <ExecutiveCard label="Sobra do mes" value={formatCurrency(cashLeftover)} icon={PiggyBank} tone={toneFromValue(cashLeftover)} detail={deltaLabel(cashLeftover - previousLeftover)} help="Entradas menos saidas comprometidas e aportes do mes." />
+        <ExecutiveCard label="Capacidade de poupanca" value={formatCurrency(savingsCapacity)} icon={ShieldCheck} tone={toneFromValue(savingsCapacity)} help="Entradas do mes menos despesas comprometidas, antes de aportes." />
+        <ExecutiveCard label="Investido no mes" value={formatCurrency(monthlyInvested)} icon={TrendingUp} tone={toneFromValue(monthlyInvested)} detail={monthlyInvested > previousInvested ? "Acima do mes anterior" : previousInvested > monthlyInvested ? "Abaixo do mes anterior" : "Estavel vs. mes anterior"} help="Aportes em investimentos que impactam o caixa neste mes." />
+        <ExecutiveCard label="Patrimonio atual" value={formatCurrency(totalAssets)} icon={Landmark} tone={toneFromValue(totalAssets)} help="Caixa centralizado, investimentos e bens patrimoniais cadastrados." />
+        <ExecutiveCard label="Investimentos" value={formatCurrency(investmentTotal)} icon={TrendingUp} tone={toneFromValue(investmentTotal)} help="Posicao atual dos investimentos cadastrados." />
+        <ExecutiveCard label="Bens patrimoniais" value={formatCurrency(patrimonyOnly)} icon={CircleDollarSign} tone="slate" help="Imoveis, veiculos, participacoes e outros bens." />
+        <ExecutiveCard label="Objetivos ativos" value={String(activeGoals.length)} icon={Target} tone={activeGoals.length > 0 ? "green" : "slate"} help="Objetivos financeiros em andamento." />
+      </section>
+
+      <section className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_.85fr]">
+        <PatrimonyEvolutionChart evolution={evolution} />
+        <ExecutiveInsights insights={insights} />
+      </section>
+
+      <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
+        <article className="dashboard-card p-5 sm:p-6">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Compromissos</p>
+              <h2 className="mt-1 text-lg font-extrabold">Proximos 90 dias</h2>
+            </div>
+            <Link href="/dashboard/fluxo-de-caixa" className="inline-flex items-center gap-1 text-xs font-bold text-moss-700">Ver fluxo <ArrowRight className="size-4" /></Link>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <CommitmentCard href="/dashboard/mensalidades" label="Mensalidades" value={activeMonthlyTotal * 3} detail={`${monthlyBills.filter((bill) => bill.status === "active").length} recorrentes`} />
+            <CommitmentCard href="/dashboard/parcelamentos" label="Parcelamentos" value={futureInstallmentTotal} detail={`${futureInstallments.length} vencimentos`} />
+            <CommitmentCard href="/dashboard/financiamentos" label="Financiamentos" value={financingNinetyDays} detail={`${financings.filter((item) => getFinancingRemainingMonths(item, customPaymentsByFinancing.get(item.id) ?? []) > 0).length} contratos`} />
+          </div>
+          <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-bold text-slate-600">Pressao futura estimada</span>
+              <strong>{formatCurrency(futureCommitments)}</strong>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+              <div className={`h-full rounded-full ${futureCommitments > Math.max(centralizedCash, monthlyIncome) ? "bg-amber-500" : "bg-moss-500"}`} style={{ width: `${Math.min(100, futureCommitments / Math.max(1, centralizedCash + monthlyIncome) * 100)}%` }} />
+            </div>
+          </div>
+        </article>
+
+        <GoalsPanel goals={activeGoals} />
+      </section>
+
+      <section className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_.85fr]">
+        <CategoriesPanel categories={categories} monthlyExpenses={monthlyExpenses} monthlyRecurringBills={monthlyRecurringBills} />
+        <RecentTransactionsPanel transactions={recentTransactions} cardsById={cardsById} />
+      </section>
+    </>
+  );
+}
+
+function ExecutiveCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+  detail,
+  help,
+}: {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  tone: MetricTone;
+  detail?: string;
+  help?: string;
+}) {
+  const styles: Record<MetricTone, { icon: string; text: string }> = {
+    slate: { icon: "bg-slate-100 text-slate-700", text: "text-slate-950" },
+    green: { icon: "bg-emerald-50 text-emerald-700", text: "text-emerald-700" },
+    red: { icon: "bg-red-50 text-red-700", text: "text-red-600" },
+  };
+  return (
+    <article className="dashboard-card p-5" title={help}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-slate-400">{label}</p>
+          <p className={`mt-2 truncate font-[var(--font-manrope)] text-2xl font-extrabold tracking-tight ${styles[tone].text}`}>{value}</p>
+        </div>
+        <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${styles[tone].icon}`}>
+          <Icon className="size-5" />
+        </span>
+      </div>
+      {detail && <p className="mt-4 text-xs font-semibold text-slate-500">{detail}</p>}
+    </article>
+  );
+}
+
+function PatrimonyEvolutionChart({ evolution }: { evolution: Array<{ date: Date; value: number; delta: number }> }) {
+  const max = Math.max(...evolution.map((item) => Math.abs(item.value)), 1);
+  return (
+    <article className="dashboard-card p-5 sm:p-6">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-moss-600">Evolucao patrimonial</p>
+        <h2 className="mt-1 text-lg font-extrabold">Patrimonio liquido simplificado</h2>
+        <p className="mt-1 text-xs text-slate-400">Janela movel dos ultimos 6 meses, usando caixa, investimentos e bens cadastrados.</p>
+      </div>
+      <div className="mt-6 flex h-56 items-end gap-3 border-b border-slate-100 pb-2">
+        {evolution.map((item) => {
+          const positive = item.value > 0;
+          const negative = item.value < 0;
+          const barColor = positive ? "bg-moss-500" : negative ? "bg-rose-400" : "bg-slate-300";
+          const valueColor = positive ? "text-emerald-700" : negative ? "text-red-600" : "text-slate-500";
+          return (
+            <div key={item.date.toISOString()} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
+              <p className={`text-center text-[10px] font-extrabold leading-tight sm:text-xs ${valueColor}`}>{compactCurrencyFormatter.format(item.value)}</p>
+              <div className={`min-h-2 rounded-t-xl shadow-sm ${barColor}`} style={{ height: `${Math.max(8, Math.abs(item.value) / max * 100)}%` }} />
+              <p className="text-center text-[10px] capitalize text-slate-400">{item.date.toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })}</p>
+            </div>
+          );
+        })}
+      </div>
+    </article>
+  );
+}
+
+function ExecutiveInsights({ insights }: { insights: Array<{ title: string; tone: MetricTone }> }) {
+  const colors: Record<MetricTone, string> = {
+    slate: "bg-slate-50 text-slate-700",
+    green: "bg-emerald-50 text-emerald-700",
+    red: "bg-red-50 text-red-700",
+  };
+  return (
+    <article className="dashboard-card p-5 sm:p-6">
+      <div className="flex items-center gap-3">
+        <span className="grid size-10 place-items-center rounded-xl bg-moss-100 text-moss-700"><BrainCircuit className="size-5" /></span>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Leituras automaticas</p>
+          <h2 className="text-lg font-extrabold">Saude financeira</h2>
+        </div>
+      </div>
+      <div className="mt-5 space-y-3">
+        {insights.map((insight) => (
+          <div key={insight.title} className={`rounded-2xl p-4 text-sm font-semibold leading-6 ${colors[insight.tone]}`}>
+            {insight.title}
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function CommitmentCard({ href, label, value, detail }: { href: string; label: string; value: number; detail: string }) {
+  return (
+    <Link href={href} className="rounded-2xl bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-slate-100">
+      <p className="text-xs font-semibold text-slate-400">{label}</p>
+      <p className="mt-2 text-lg font-extrabold">{formatCurrency(value)}</p>
+      <p className="mt-1 text-xs text-slate-500">{detail}</p>
+    </Link>
+  );
+}
+
+function GoalsPanel({ goals }: { goals: Awaited<ReturnType<typeof getGoals>> }) {
+  return (
+    <article className="dashboard-card p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Objetivos</p>
+          <h2 className="mt-1 text-lg font-extrabold">Em andamento</h2>
+        </div>
+        <Link href="/dashboard/objetivos" className="inline-flex items-center gap-1 text-xs font-bold text-moss-700">Ver objetivos <ArrowRight className="size-4" /></Link>
+      </div>
+      {goals.length > 0 ? (
+        <div className="mt-5 space-y-3">
+          {goals.slice(0, 3).map((goal) => {
+            const progress = goalPercent(goal.current_amount, goal.target_amount);
+            return (
+              <div key={goal.id} className="rounded-2xl bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-bold">{goal.name}</p>
+                    <p className="mt-1 text-xs text-slate-500">{formatCurrency(Number(goal.current_amount))} de {formatCurrency(Number(goal.target_amount))}</p>
+                  </div>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-xs font-extrabold text-moss-700">{progress}%</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                  <div className="h-full rounded-full bg-moss-500" style={{ width: `${progress}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-5 rounded-2xl bg-slate-50 p-6 text-center text-sm text-slate-500">
+          Nenhum objetivo ativo no momento.
+        </div>
+      )}
+    </article>
+  );
+}
+
+function CategoriesPanel({ categories, monthlyExpenses, monthlyRecurringBills }: { categories: Array<[string, number]>; monthlyExpenses: number; monthlyRecurringBills: number }) {
+  const categorizedExpenses = Math.max(monthlyExpenses + monthlyRecurringBills, 1);
+  return (
+    <article className="dashboard-card p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Este mes</p>
+          <h2 className="mt-1 text-lg font-extrabold">Top categorias de saida</h2>
+        </div>
+        <Link href="/dashboard/movimentacoes" className="hidden items-center gap-1 text-xs font-bold text-moss-700 sm:inline-flex">Historico <ArrowRight className="size-4" /></Link>
+      </div>
+      {categories.length > 0 ? (
+        <div className="mt-6 space-y-5">
+          {categories.slice(0, 5).map(([category, amount], index) => {
+            const percentage = amount / categorizedExpenses * 100;
+            return (
+              <div key={category}>
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-600"><CategoryIcon category={category} /> <span className="truncate">{category}</span></span>
+                  <span className="shrink-0 font-extrabold">{formatCurrency(amount)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className={index === 0 ? "h-full rounded-full bg-moss-500" : "h-full rounded-full bg-slate-400"} style={{ width: `${Math.max(4, percentage)}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-sm text-slate-500">Nenhuma saida registrada neste mes.</div>
+      )}
+    </article>
+  );
+}
+
+function RecentTransactionsPanel({
+  transactions,
+  cardsById,
+}: {
+  transactions: Awaited<ReturnType<typeof getTransactions>>;
+  cardsById: Map<string, Awaited<ReturnType<typeof getCreditCards>>[number]>;
+}) {
+  return (
+    <article className="dashboard-card p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Historico</p>
+          <h2 className="mt-1 text-lg font-extrabold">Movimentacoes recentes</h2>
+        </div>
+        <NewMovementButton compact />
+      </div>
+      <div className="mt-5 divide-y divide-slate-100">
+        {transactions.map((transaction) => {
+          const income = transaction.type === "income";
+          const card = transaction.credit_card_id ? cardsById.get(transaction.credit_card_id) : undefined;
+          const impactDate = getTransactionCashFlowDate(transaction);
+          return (
+            <div key={transaction.id} className="flex items-center gap-3 py-3">
+              <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${income ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+                <CategoryIcon category={transaction.category} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold">{transaction.description}</p>
+                <p className="text-xs text-slate-400">{transaction.category}{card ? ` - ${card.name} final ${card.last_four_digits}` : ""}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{card ? `Compra em ${dateFormatter.format(parseDate(transaction.transaction_date))} - Impacta em ${dateFormatter.format(parseDate(impactDate))}` : dateFormatter.format(parseDate(transaction.transaction_date))}</p>
+              </div>
+              <p className={`shrink-0 text-sm font-extrabold ${income ? "text-emerald-600" : "text-slate-900"}`}>{income ? "+" : "-"} {formatCurrency(Number(transaction.amount))}</p>
+              <TransactionActions transaction={transaction} />
+            </div>
+          );
+        })}
+      </div>
+      <Link href="/dashboard/movimentacoes" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-moss-700">Historico completo <ArrowRight className="size-4" /></Link>
+    </article>
+  );
+}
+
+type MetricTone = "slate" | "green" | "red";
+
+function toneFromValue(value: number): MetricTone {
+  if (value > 0) return "green";
+  if (value < 0) return "red";
+  return "slate";
+}
+
+function sumTransactions(transactions: Awaited<ReturnType<typeof getTransactions>>, type: "income" | "expense") {
+  return transactions
+    .filter((transaction) => transaction.type === type)
+    .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+}
+
+function goalPercent(current: number, target: number) {
+  if (Number(target) <= 0) return 0;
+  return Math.min(100, Math.round(Number(current) / Number(target) * 100));
+}
+
+function deltaLabel(delta: number) {
+  if (delta > 0) return `${formatCurrency(delta)} acima do mes anterior`;
+  if (delta < 0) return `${formatCurrency(Math.abs(delta))} abaixo do mes anterior`;
+  return "Estavel vs. mes anterior";
+}
+
+function buildPatrimonyEvolution({
+  totalAssets,
+  transactions,
+  investmentContributions,
+  currentMonthStart,
+}: {
+  totalAssets: number;
+  transactions: Awaited<ReturnType<typeof getTransactions>>;
+  investmentContributions: Awaited<ReturnType<typeof getInvestmentContributions>>;
+  currentMonthStart: Date;
+}) {
+  const months = Array.from({ length: 6 }, (_, index) => addMonths(currentMonthStart, index - 5));
+  const deltas = months.map((date) => {
+    const { start, end } = getMonthRange(date);
+    const transactionNet = transactions
+      .filter((transaction) => getTransactionCashFlowDate(transaction) >= start && getTransactionCashFlowDate(transaction) <= end)
       .reduce(
         (sum, transaction) =>
           sum +
@@ -267,203 +617,56 @@ export default async function DashboardPage() {
               : -Number(transaction.amount)),
         0,
       );
-    return { date, net };
+    const invested = investmentContributions
+      .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= start && item.contribution_date <= end)
+      .reduce((sum, item) => sum + Number(item.amount), 0);
+    return transactionNet + invested;
   });
-  let runningAssets =
-    totalAssets -
-    evolutionMonths.reduce((sum, month) => sum + month.net, 0);
-  const evolution = evolutionMonths.map((month) => {
-    runningAssets += month.net;
-    return { ...month, value: runningAssets };
+  let running = totalAssets - deltas.reduce((sum, delta) => sum + delta, 0);
+  return months.map((date, index) => {
+    running += deltas[index];
+    return { date, delta: deltas[index], value: running };
   });
-  const maxEvolution = Math.max(...evolution.map((item) => Math.abs(item.value)), 1);
+}
 
-  return (
-    <>
-      <PageHeading
-        eyebrow="Visão geral"
-        title="Sua vida financeira, em perspectiva."
-        description="Valores calculados a partir das movimentações salvas na sua conta."
-      />
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <SummaryCard label="Caixa Centralizado" value={formatCurrency(centralizedCash)} icon={WalletCards} help="Soma atual dos saldos de todas as contas bancárias." />
-        <SummaryCard label="Patrimônio investido" value={formatCurrency(investedAssets)} icon={TrendingUp} tone="blue" help="Soma do valor atual de todos os investimentos." />
-        <SummaryCard label="Patrimônio total" value={formatCurrency(totalAssets)} icon={ShieldCheck} help="Saldo disponível mais investimentos e bens cadastrados." />
-        <SummaryCard label="Despesas comprometidas" value={formatCurrency(committedExpenses)} icon={CreditCard} tone="amber" help="Despesas do mês, mensalidades, parcelas, financiamentos e empréstimos ativos." />
-        <SummaryCard label="Capacidade de poupança" value={formatCurrency(savingsCapacity)} icon={PiggyBank} help="Entradas do mês menos despesas comprometidas." />
-        <SummaryCard label="Objetivo principal" value={primaryGoal ? `${goalProgress}% concluído` : "Não definido"} icon={CircleDollarSign} help="Objetivo ativo com maior prioridade." />
-      </section>
-
-      <section className="dashboard-card mt-6 p-6">
-        <div><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Evolução patrimonial</p><h2 className="mt-2 text-lg font-extrabold">Patrimônio líquido simplificado</h2><p className="mt-1 text-xs text-slate-400">Investimentos atuais combinados ao resultado das movimentações mensais.</p></div>
-        <div className="mt-8 flex h-44 items-end gap-3 border-b border-slate-100">
-          {evolution.map((item) => <div key={item.date.toISOString()} className="group flex h-full flex-1 items-end"><div title={formatCurrency(item.value)} className="w-full rounded-t-lg bg-moss-100 transition hover:bg-moss-500" style={{ height: `${Math.max(5, Math.abs(item.value) / maxEvolution * 100)}%` }} /></div>)}
-        </div>
-        <div className="mt-3 grid grid-cols-6 text-center text-[10px] capitalize text-slate-400">{evolution.map((item) => <span key={item.date.toISOString()}>{item.date.toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })}</span>)}</div>
-      </section>
-
-      <section className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_.85fr]">
-        <article className="dashboard-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Este mês</p>
-              <h2 className="mt-2 font-[var(--font-manrope)] text-lg font-extrabold">Despesas por categoria</h2>
-              <p className="mt-1 text-xs text-slate-400">Distribuição das saídas registradas no período.</p>
-            </div>
-            <Link href="/dashboard/fluxo-de-caixa" className="focus-ring hidden items-center gap-1 rounded-lg text-xs font-bold text-moss-700 sm:flex">
-              Ver fluxo <ArrowRight className="size-4" />
-            </Link>
-          </div>
-
-          {categories.length > 0 ? (
-            <div className="mt-7 space-y-5">
-              {categories.slice(0, 6).map(([category, amount], index) => {
-                const categorizedExpenses = monthlyExpenses + monthlyRecurringBills;
-                const percentage = categorizedExpenses > 0 ? (amount / categorizedExpenses) * 100 : 0;
-                return (
-                  <div key={category}>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-2 font-semibold text-slate-600"><CategoryIcon category={category} />{category}</span>
-                      <span className="font-extrabold">{formatCurrency(amount)}</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={index === 0 ? "h-full rounded-full bg-moss-500" : "h-full rounded-full bg-slate-300"}
-                        style={{ width: `${Math.max(4, percentage)}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="mt-8 rounded-2xl bg-slate-50 px-5 py-10 text-center text-sm text-slate-500">
-              Nenhuma despesa registrada neste mês.
-            </div>
-          )}
-        </article>
-
-        {primaryGoal ? (
-          <article className="rounded-2xl bg-slate-950 p-6 text-white shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs text-slate-400">Objetivo principal</p>
-                <h2 className="mt-2 font-[var(--font-manrope)] text-xl font-extrabold">{primaryGoal.name}</h2>
-              </div>
-              <span className="grid size-10 place-items-center rounded-xl bg-moss-500/15 text-moss-500"><CircleDollarSign className="size-5" /></span>
-            </div>
-            <div className="mt-10 flex items-end justify-between">
-              <div><p className="text-3xl font-extrabold">{formatCurrency(Number(primaryGoal.current_amount))}</p><p className="mt-1 text-xs text-slate-400">de {formatCurrency(Number(primaryGoal.target_amount))}</p></div>
-              <p className="text-xl font-bold text-moss-500">{goalProgress}%</p>
-            </div>
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-moss-500" style={{ width: `${goalProgress}%` }} /></div>
-            <p className="mt-5 text-xs leading-5 text-slate-400">Data alvo: {dateFormatter.format(parseDate(primaryGoal.target_date))}.</p>
-            <Link href="/dashboard/objetivos" className="focus-ring mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 text-sm font-bold text-slate-900">Ver objetivo <ArrowRight className="size-4" /></Link>
-          </article>
-        ) : (
-          <article className="dashboard-card flex flex-col items-center justify-center p-6 text-center">
-            <CircleDollarSign className="size-9 text-moss-500" />
-            <h2 className="mt-4 font-extrabold">Defina seu primeiro objetivo</h2>
-            <p className="mt-2 text-xs leading-5 text-slate-500">A estrutura está pronta para acompanhar suas metas financeiras.</p>
-            <Link href="/dashboard/objetivos" className="mt-5 text-sm font-bold text-moss-700">Ir para objetivos</Link>
-          </article>
-        )}
-      </section>
-
-      <section className="mt-6 grid gap-6 xl:grid-cols-[1.25fr_.95fr]">
-        <article className="dashboard-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Histórico</p>
-              <h2 className="mt-2 font-[var(--font-manrope)] text-lg font-extrabold">Movimentações recentes</h2>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/dashboard/movimentacoes" className="text-xs font-bold text-moss-700">Ver todas</Link>
-              <NewMovementButton compact />
-            </div>
-          </div>
-          <div className="mt-5 divide-y divide-slate-100">
-            {recentTransactions.map((transaction) => {
-              const income = transaction.type === "income";
-              const card = transaction.credit_card_id
-                ? cardsById.get(transaction.credit_card_id)
-                : undefined;
-              const impactDate = getTransactionCashFlowDate(transaction);
-              return (
-                <div key={transaction.id} className="flex items-center gap-3 py-3">
-                  <span className={`grid size-10 place-items-center rounded-xl ${income ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-                    <CategoryIcon category={transaction.category} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold">{transaction.description}</p>
-                    <p className="text-xs text-slate-400">
-                      {transaction.category}
-                      {card
-                        ? ` · ${card.name} final ${card.last_four_digits}`
-                        : ""}
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-400">
-                      {card
-                        ? `Compra em ${dateFormatter.format(parseDate(transaction.transaction_date))} · Impacta em ${dateFormatter.format(parseDate(impactDate))}`
-                        : dateFormatter.format(parseDate(transaction.transaction_date))}
-                    </p>
-                  </div>
-                  <p className={`text-sm font-extrabold ${income ? "text-emerald-600" : "text-slate-900"}`}>
-                    {income ? "+" : "-"} {formatCurrency(Number(transaction.amount))}
-                  </p>
-                  <TransactionActions transaction={transaction} />
-                </div>
-              );
-            })}
-          </div>
-        </article>
-
-        <article className="dashboard-card p-6">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-moss-100 text-moss-700"><BrainCircuit className="size-5" /></span>
-            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Leituras automáticas</p><h2 className="font-[var(--font-manrope)] text-lg font-extrabold">Recomendações da Carteira</h2></div>
-          </div>
-          <div className="mt-6 space-y-3">
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm font-bold">{savingsCapacity >= 0 ? `Você poupou ${formatCurrency(savingsCapacity)} neste mês.` : `Suas despesas superaram as receitas em ${formatCurrency(Math.abs(savingsCapacity))}.`}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">{savingsCapacity >= 0 ? "O cálculo já considera parcelas, financiamentos e empréstimos ativos." : "Revise as maiores categorias antes de assumir novos compromissos."}</p>
-            </div>
-            {largestCategory && (
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-sm font-bold">{largestCategory[0]} é sua maior categoria de despesa.</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">Ela representa {Math.round((largestCategory[1] / (monthlyExpenses + monthlyRecurringBills)) * 100)}% das saídas categorizadas deste mês.</p>
-              </div>
-            )}
-            <div className="rounded-xl bg-slate-50 p-4">
-              <p className="text-sm font-bold">Seu Caixa Centralizado é {formatCurrency(centralizedCash)}.</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Entradas, saídas, transferências e aportes atualizam os saldos das contas.</p>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section className="mt-6">
-        <div className="mb-4"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Próximos 90 dias</p><h2 className="mt-1 text-xl font-extrabold">Compromissos futuros</h2></div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link href="/dashboard/mensalidades" className="dashboard-card p-5 transition hover:-translate-y-0.5"><p className="text-xs text-slate-400">Mensalidades ativas</p><p className="mt-2 text-xl font-extrabold">{formatCurrency(activeMonthlyTotal * 3)}</p><p className="mt-2 text-xs text-slate-500">{monthlyBills.filter((bill) => bill.status === "active").length} compromissos recorrentes</p></Link>
-          <Link href="/dashboard/parcelamentos" className="dashboard-card p-5 transition hover:-translate-y-0.5"><p className="text-xs text-slate-400">Parcelas previstas</p><p className="mt-2 text-xl font-extrabold">{formatCurrency(futureInstallmentTotal)}</p><p className="mt-2 text-xs text-slate-500">{futureInstallments.length} vencimentos calculados</p></Link>
-          <Link href="/dashboard/financiamentos" className="dashboard-card p-5 transition hover:-translate-y-0.5">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-400">Financiamentos e empréstimos</p>
-              <div className="flex -space-x-1">
-                {financings.slice(0, 3).map((item) => (
-                  <span key={item.id} className="grid size-7 place-items-center rounded-full border-2 border-white bg-slate-100 text-slate-600">
-                    <FinancingTypeIcon type={item.type} className="size-3.5" />
-                  </span>
-                ))}
-              </div>
-            </div>
-            <p className="mt-2 text-xl font-extrabold">{formatCurrency(financingNinetyDays)}</p>
-            <p className="mt-2 text-xs text-slate-500">{financings.filter((item) => getFinancingRemainingMonths(item, customPaymentsByFinancing.get(item.id) ?? []) > 0).length} contratos ativos</p>
-          </Link>
-        </div>
-      </section>
-    </>
+function buildInsights({
+  cashLeftover,
+  monthlyIncome,
+  committedExpenses,
+  futureCommitments,
+  centralizedCash,
+  monthlyInvested,
+  previousInvested,
+  activeGoalCount,
+}: {
+  cashLeftover: number;
+  monthlyIncome: number;
+  committedExpenses: number;
+  futureCommitments: number;
+  centralizedCash: number;
+  monthlyInvested: number;
+  previousInvested: number;
+  activeGoalCount: number;
+}) {
+  const insights: Array<{ title: string; tone: MetricTone }> = [];
+  insights.push(
+    cashLeftover >= 0
+      ? { title: "Sua sobra de caixa esta positiva este mes.", tone: "green" }
+      : { title: "Atencao: as saidas e aportes superam as entradas deste mes.", tone: "red" },
   );
+  if (monthlyIncome > 0 && committedExpenses / monthlyIncome > 0.75) {
+    insights.push({ title: "Seus compromissos consomem mais de 75% das entradas do mes.", tone: "red" });
+  } else if (monthlyIncome > 0) {
+    insights.push({ title: "Seu comprometimento financeiro esta sob controle neste mes.", tone: "green" });
+  }
+  if (futureCommitments > centralizedCash + monthlyIncome) {
+    insights.push({ title: "Atencao: os compromissos futuros pressionam o caixa disponivel.", tone: "red" });
+  }
+  if (monthlyInvested > previousInvested) {
+    insights.push({ title: "Voce investiu mais este mes do que no mes anterior.", tone: "green" });
+  }
+  if (activeGoalCount > 0) {
+    insights.push({ title: "Voce possui objetivos financeiros em andamento.", tone: "slate" });
+  }
+  return insights.slice(0, 4);
 }
