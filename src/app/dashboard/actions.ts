@@ -56,6 +56,9 @@ const validFinancingRateIndexes = new Set<string>(
   FINANCING_RATE_INDEXES.map((item) => item.value),
 );
 const validBanks = new Set<string>(BANKS);
+const INVESTMENT_WITHDRAWAL_CATEGORY =
+  INCOME_CATEGORIES.find((category) => category.includes("Saque")) ??
+  "Saque de Investimento";
 
 function requiredText(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -239,6 +242,62 @@ async function transactionPayload(
   };
 }
 
+async function registerInvestmentWithdrawal({
+  supabase,
+  userId,
+  investmentId,
+  bankAccountId,
+  amount,
+  resultingPosition,
+  withdrawalDate,
+}: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  userId: string;
+  investmentId: string;
+  bankAccountId: string;
+  amount: number;
+  resultingPosition: number;
+  withdrawalDate: string;
+}) {
+  const [{ data: investment }, { data: account }] = await Promise.all([
+    supabase
+      .from("investments")
+      .select("id")
+      .eq("id", investmentId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase
+      .from("bank_accounts")
+      .select("id")
+      .eq("id", bankAccountId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (!investment || !account) return false;
+
+  const { error } = await supabase.from("investment_withdrawals").insert({
+    user_id: userId,
+    investment_id: investmentId,
+    bank_account_id: bankAccountId,
+    amount,
+    resulting_position: resultingPosition,
+    withdrawal_date: withdrawalDate,
+  });
+  if (error) return false;
+
+  const { error: positionError } = await supabase
+    .from("investments")
+    .update({
+      current_position: resultingPosition,
+      current_position_date: withdrawalDate,
+      current_value: resultingPosition,
+      reference_date: withdrawalDate,
+    })
+    .eq("id", investmentId)
+    .eq("user_id", userId);
+  return !positionError;
+}
+
 export async function createTransaction(formData: FormData): Promise<ActionResult> {
   const { supabase, user } = await getAuthenticatedContext();
   if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
@@ -265,6 +324,35 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
   ) {
     await supabase.from("transactions").delete().eq("id", transaction.id);
     return databaseError("Unable to update account balance after transaction.");
+  }
+  if (payload.type === "income" && payload.category === INVESTMENT_WITHDRAWAL_CATEGORY) {
+    const investmentId = requiredText(formData, "investment_id");
+    const resultingPosition = nonNegativeNumber(formData, "resulting_position");
+    if (
+      !investmentId ||
+      resultingPosition === null ||
+      !payload.bank_account_id ||
+      !(await registerInvestmentWithdrawal({
+        supabase,
+        userId: user.id,
+        investmentId,
+        bankAccountId: payload.bank_account_id,
+        amount: Number(payload.amount),
+        resultingPosition,
+        withdrawalDate: payload.transaction_date,
+      }))
+    ) {
+      if (payload.bank_account_id) {
+        await adjustAccountBalance(
+          supabase,
+          user.id,
+          payload.bank_account_id,
+          -transactionBalanceEffect(payload),
+        );
+      }
+      await supabase.from("transactions").delete().eq("id", transaction.id);
+      return databaseError("Unable to register investment withdrawal.");
+    }
   }
   revalidateFinancialPages();
   return { success: true };
@@ -958,6 +1046,66 @@ export async function deleteGoal(id: string): Promise<ActionResult> {
   return { success: true };
 }
 
+export async function createGoalInvestmentAllocation(formData: FormData): Promise<ActionResult> {
+  const goalId = requiredText(formData, "goal_id");
+  const investmentId = requiredText(formData, "investment_id");
+  const allocatedAmount = positiveNumber(formData, "allocated_amount");
+  if (!goalId || !investmentId || allocatedAmount === null) {
+    return { success: false, message: "Revise a alocaÃ§Ã£o do investimento." };
+  }
+
+  const { supabase, user } = await getAuthenticatedContext();
+  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  const [{ data: goal }, { data: investment }, { data: allocations }] = await Promise.all([
+    supabase.from("goals").select("id").eq("id", goalId).eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("investments")
+      .select("id, current_position, current_value")
+      .eq("id", investmentId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("goal_investment_allocations")
+      .select("allocated_amount")
+      .eq("investment_id", investmentId)
+      .eq("user_id", user.id),
+  ]);
+  if (!goal || !investment) {
+    return { success: false, message: "Objetivo ou investimento invÃ¡lido." };
+  }
+  const position = Number(investment.current_position ?? investment.current_value ?? 0);
+  const alreadyAllocated = (allocations ?? []).reduce(
+    (sum, item) => sum + Number(item.allocated_amount),
+    0,
+  );
+  if (alreadyAllocated + allocatedAmount > position) {
+    return { success: false, message: "O valor alocado ultrapassa o saldo livre do investimento." };
+  }
+
+  const { error } = await supabase.from("goal_investment_allocations").insert({
+    user_id: user.id,
+    goal_id: goalId,
+    investment_id: investmentId,
+    allocated_amount: allocatedAmount,
+  });
+  if (error) return databaseError(`Unable to create goal allocation: ${error.message}`);
+  revalidateFinancialPages();
+  return { success: true };
+}
+
+export async function deleteGoalInvestmentAllocation(id: string): Promise<ActionResult> {
+  const { supabase, user } = await getAuthenticatedContext();
+  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  const { error } = await supabase
+    .from("goal_investment_allocations")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return databaseError(`Unable to delete goal allocation: ${error.message}`);
+  revalidateFinancialPages();
+  return { success: true };
+}
+
 export async function createBankAccount(formData: FormData): Promise<ActionResult> {
   const bank = requiredText(formData, "bank");
   const accountNumber = requiredText(formData, "account_number");
@@ -1255,6 +1403,88 @@ export async function deleteInvestmentContribution(id: string): Promise<ActionRe
     })
     .eq("id", contribution.investment_id)
     .eq("user_id", user.id);
+  revalidateFinancialPages();
+  return { success: true };
+}
+
+export async function createInvestmentWithdrawal(formData: FormData): Promise<ActionResult> {
+  const investmentId = requiredText(formData, "investment_id");
+  const bankAccountId = requiredText(formData, "bank_account_id");
+  const amount = positiveNumber(formData, "amount");
+  const resultingPosition = nonNegativeNumber(formData, "resulting_position");
+  const withdrawalDate = requiredText(formData, "withdrawal_date");
+  if (
+    !investmentId ||
+    !bankAccountId ||
+    amount === null ||
+    resultingPosition === null ||
+    !validDate(withdrawalDate)
+  ) {
+    return { success: false, message: "Revise os dados do saque." };
+  }
+
+  const { supabase, user } = await getAuthenticatedContext();
+  if (!user) return { success: false, message: "Sua sessÃ£o expirou. Entre novamente." };
+  const [{ data: investment }, { data: account }] = await Promise.all([
+    supabase
+      .from("investments")
+      .select("id, name")
+      .eq("id", investmentId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("bank_accounts")
+      .select("id")
+      .eq("id", bankAccountId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+  if (!investment || !account) {
+    return { success: false, message: "Investimento ou conta invÃ¡lida." };
+  }
+
+  if (!(await adjustAccountBalance(supabase, user.id, bankAccountId, amount))) {
+    return databaseError("Unable to credit withdrawal account.");
+  }
+
+  const { data: transaction, error: transactionError } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: user.id,
+      type: "income",
+      description: `Saque de ${investment.name}`,
+      amount,
+      category: INVESTMENT_WITHDRAWAL_CATEGORY,
+      payment_method: "TransferÃªncia",
+      transaction_date: withdrawalDate,
+      cash_flow_date: withdrawalDate,
+      bank_account_id: bankAccountId,
+      credit_card_id: null,
+      monthly_bill_id: null,
+    })
+    .select("id")
+    .single();
+  if (transactionError) {
+    await adjustAccountBalance(supabase, user.id, bankAccountId, -amount);
+    return databaseError(`Unable to create withdrawal transaction: ${transactionError.message}`);
+  }
+
+  if (
+    !(await registerInvestmentWithdrawal({
+      supabase,
+      userId: user.id,
+      investmentId,
+      bankAccountId,
+      amount,
+      resultingPosition,
+      withdrawalDate,
+    }))
+  ) {
+    await adjustAccountBalance(supabase, user.id, bankAccountId, -amount);
+    await supabase.from("transactions").delete().eq("id", transaction.id);
+    return databaseError("Unable to register investment withdrawal.");
+  }
+
   revalidateFinancialPages();
   return { success: true };
 }

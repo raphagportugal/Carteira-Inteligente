@@ -31,12 +31,15 @@ import {
 import {
   getBankAccounts,
   getCreditCards,
+  getFinancialPlans,
   getFinancingCustomPayments,
   getFinancings,
+  getGoalInvestmentAllocations,
   getGoals,
   getInstallments,
   getInvestments,
   getInvestmentContributions,
+  getInvestmentWithdrawals,
   getMonthlyBills,
   getTransactions,
 } from "@/lib/finance/queries";
@@ -55,6 +58,9 @@ export default async function DashboardPage() {
     creditCards,
     bankAccounts,
     investmentContributions,
+    investmentWithdrawals,
+    financialPlans,
+    goalAllocations,
     recentTransactions,
   ] = await Promise.all([
     getTransactions(),
@@ -67,6 +73,9 @@ export default async function DashboardPage() {
     getCreditCards(),
     getBankAccounts(),
     getInvestmentContributions(),
+    getInvestmentWithdrawals(),
+    getFinancialPlans(),
+    getGoalInvestmentAllocations(),
     getTransactions({ limit: 5 }),
   ]);
 
@@ -147,6 +156,13 @@ export default async function DashboardPage() {
     start,
     end,
   });
+  const monthlyInvested =
+    investmentContributions
+      .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= start && item.contribution_date <= end)
+      .reduce((sum, item) => sum + Number(item.amount), 0) -
+    investmentWithdrawals
+      .filter((item) => item.withdrawal_date >= start && item.withdrawal_date <= end)
+      .reduce((sum, item) => sum + Number(item.amount), 0);
   const committedExpenses =
     monthlyExpenses +
     monthlyInstallments +
@@ -157,6 +173,7 @@ export default async function DashboardPage() {
     0,
   );
   const savingsCapacity = monthlyIncome - committedExpenses;
+  const cashLeftover = monthlyIncome - committedExpenses - monthlyInvested;
   const patrimonyAssetTypes = new Set(["property", "vehicle", "business_stake", "other_asset"]);
   const investedAssets = investments
     .filter((investment) => !patrimonyAssetTypes.has(investment.asset_type ?? investment.type))
@@ -191,15 +208,25 @@ export default async function DashboardPage() {
         priorityWeight[b.priority] - priorityWeight[a.priority] ||
         a.target_date.localeCompare(b.target_date),
     )[0];
+  const primaryGoalAllocated = primaryGoal
+    ? goalAllocations
+        .filter((item) => item.goal_id === primaryGoal.id)
+        .reduce((sum, item) => sum + Number(item.allocated_amount), 0)
+    : 0;
   const goalProgress = primaryGoal
     ? Math.min(
         100,
         Math.round(
-          (Number(primaryGoal.current_amount) / Number(primaryGoal.target_amount)) *
+          ((Number(primaryGoal.current_amount) + primaryGoalAllocated) / Number(primaryGoal.target_amount)) *
             100,
         ),
       )
     : 0;
+  const currentMonthPlans = financialPlans.filter((plan) => plan.month === start);
+  const plannedTotal = currentMonthPlans.reduce((sum, plan) => sum + Number(plan.planned_amount), 0);
+  const plannedExecuted = currentMonthPlans.reduce((sum, plan) => sum + currentMonth
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id && transaction.category === plan.category)
+    .reduce((total, transaction) => total + Number(transaction.amount), 0), 0);
 
   const ninetyDaysFromNow = new Date();
   ninetyDaysFromNow.setUTCDate(ninetyDaysFromNow.getUTCDate() + 90);
@@ -288,12 +315,29 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SummaryCard label="Caixa Centralizado" value={formatCurrency(centralizedCash)} icon={WalletCards} help="Soma atual dos saldos de todas as contas bancárias." />
+        <SummaryCard label="Sobra de caixa do mês" value={formatCurrency(cashLeftover)} icon={PiggyBank} tone={cashLeftover >= 0 ? "green" : "amber"} help="Entradas menos compromissos e valor investido no mês." />
+        <SummaryCard label="Valor investido no mês" value={formatCurrency(monthlyInvested)} icon={TrendingUp} tone="blue" help="Aportes menos saques de investimentos no mês." />
         <SummaryCard label="Patrimônio investido" value={formatCurrency(investedAssets)} icon={TrendingUp} tone="blue" help="Soma do valor atual de todos os investimentos." />
         <SummaryCard label="Patrimônio total" value={formatCurrency(totalAssets)} icon={ShieldCheck} help="Saldo disponível mais investimentos e bens cadastrados." />
         <SummaryCard label="Despesas comprometidas" value={formatCurrency(committedExpenses)} icon={CreditCard} tone="amber" help="Despesas do mês, mensalidades, parcelas, financiamentos e empréstimos ativos." />
         <SummaryCard label="Capacidade de poupança" value={formatCurrency(savingsCapacity)} icon={PiggyBank} help="Entradas do mês menos despesas comprometidas." />
         <SummaryCard label="Objetivo principal" value={primaryGoal ? `${goalProgress}% concluído` : "Não definido"} icon={CircleDollarSign} help="Objetivo ativo com maior prioridade." />
       </section>
+
+      {plannedTotal > 0 && (
+        <section className="dashboard-card mt-6 p-6">
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Planejado vs executado</p>
+              <h2 className="mt-2 font-[var(--font-manrope)] text-lg font-extrabold">Metas de gastos do mês</h2>
+            </div>
+            <p className="text-sm font-extrabold">{formatCurrency(plannedExecuted)} / {formatCurrency(plannedTotal)}</p>
+          </div>
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full rounded-full bg-moss-500" style={{ width: `${Math.min(100, plannedExecuted / plannedTotal * 100)}%` }} />
+          </div>
+        </section>
+      )}
 
       <section className="dashboard-card mt-6 p-6">
         <div><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Evolução patrimonial</p><h2 className="mt-2 text-lg font-extrabold">Patrimônio líquido simplificado</h2><p className="mt-1 text-xs text-slate-400">Investimentos atuais combinados ao resultado das movimentações mensais.</p></div>
@@ -354,7 +398,7 @@ export default async function DashboardPage() {
               <span className="grid size-10 place-items-center rounded-xl bg-moss-500/15 text-moss-500"><CircleDollarSign className="size-5" /></span>
             </div>
             <div className="mt-10 flex items-end justify-between">
-              <div><p className="text-3xl font-extrabold">{formatCurrency(Number(primaryGoal.current_amount))}</p><p className="mt-1 text-xs text-slate-400">de {formatCurrency(Number(primaryGoal.target_amount))}</p></div>
+              <div><p className="text-3xl font-extrabold">{formatCurrency(Number(primaryGoal.current_amount) + primaryGoalAllocated)}</p><p className="mt-1 text-xs text-slate-400">de {formatCurrency(Number(primaryGoal.target_amount))}</p>{primaryGoalAllocated > 0 && <p className="mt-1 text-[10px] font-bold text-moss-500">Inclui {formatCurrency(primaryGoalAllocated)} alocados</p>}</div>
               <p className="text-xl font-bold text-moss-500">{goalProgress}%</p>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-moss-500" style={{ width: `${goalProgress}%` }} /></div>

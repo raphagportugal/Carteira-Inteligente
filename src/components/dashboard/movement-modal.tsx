@@ -11,7 +11,7 @@ import {
   INCOME_CATEGORIES,
   PAYMENT_METHODS,
 } from "@/lib/finance/catalogs";
-import type { BankAccount, CreditCard, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
+import type { BankAccount, CreditCard, Investment, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
 type MovementModalProps = {
@@ -20,6 +20,7 @@ type MovementModalProps = {
   cards: CreditCard[];
   accounts: BankAccount[];
   monthlyBills: MonthlyBill[];
+  investments: Investment[];
   transaction?: Transaction | null;
 };
 
@@ -29,12 +30,14 @@ export function MovementModal({
   cards,
   accounts,
   monthlyBills,
+  investments,
   transaction,
 }: MovementModalProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<TransactionType>("income");
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [category, setCategory] = useState("");
   const [linksMonthlyBill, setLinksMonthlyBill] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -43,6 +46,7 @@ export function MovementModal({
     if (!open) return;
     setType(transaction?.type ?? "income");
     setPaymentMethod(transaction?.payment_method ?? "");
+    setCategory(transaction?.category ?? "");
     setLinksMonthlyBill(Boolean(transaction?.monthly_bill_id));
     setError("");
   }, [open, transaction]);
@@ -51,6 +55,8 @@ export function MovementModal({
 
   const usesCreditCard =
     type === "expense" && paymentMethod === CREDIT_CARD_PAYMENT_METHOD;
+  const isInvestmentWithdrawal =
+    type === "income" && category.includes("Saque");
   const today = new Date().toISOString().slice(0, 10);
   const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
@@ -177,7 +183,8 @@ export function MovementModal({
               <span className="mb-2 block text-sm font-semibold">Categoria <span className="font-normal text-slate-400">(opcional)</span></span>
               <select
                 name="category"
-                defaultValue={transaction?.category ?? ""}
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
                 className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
               >
                 <option value="">Sem categoria</option>
@@ -206,6 +213,42 @@ export function MovementModal({
               </select>
             </label>
           </div>
+
+          {isInvestmentWithdrawal && (
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-sm font-bold text-slate-900">Dados do saque</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                O valor entra na conta escolhida e atualiza a posiÃ§Ã£o atual do investimento.
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold">Investimento</span>
+                  <select
+                    name="investment_id"
+                    required
+                    defaultValue=""
+                    className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
+                  >
+                    <option value="" disabled>Selecione</option>
+                    {investments.map((investment) => (
+                      <option key={investment.id} value={investment.id}>{investment.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold">Nova posiÃ§Ã£o atual</span>
+                  <input
+                    name="resulting_position"
+                    required
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm"
+                  />
+                </label>
+              </div>
+            </div>
+          )}
 
           {usesCreditCard && (
             <label className="block">
@@ -324,6 +367,7 @@ export function MovementModal({
               isPending ||
               (usesCreditCard && cards.length === 0) ||
               (!usesCreditCard && accounts.length === 0)
+              || (isInvestmentWithdrawal && investments.length === 0)
             }
             className="focus-ring mt-2 h-12 w-full rounded-xl bg-slate-900 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
           >

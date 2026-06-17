@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { getBankAccounts, getCreditCards, getMonthlyBills } from "@/lib/finance/queries";
+import { getBankAccounts, getCreditCards, getInvestments, getMonthlyBills } from "@/lib/finance/queries";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -16,11 +16,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const avatar = typeof user.user_metadata?.avatar === "string"
     ? user.user_metadata.avatar
     : "teal";
-  const [cards, accounts, monthlyBills] = await Promise.all([
+  const [cards, accounts, monthlyBills, investments] = await Promise.all([
     getCreditCards(),
     getBankAccounts(),
     getMonthlyBills(),
+    getInvestments(),
   ]);
 
-  return <DashboardShell name={name} fullName={fullName} avatar={avatar} cards={cards} accounts={accounts} monthlyBills={monthlyBills}>{children}</DashboardShell>;
+  return <DashboardShell name={name} fullName={fullName} avatar={avatar} cards={cards} accounts={accounts} monthlyBills={monthlyBills} investments={investments}>{children}</DashboardShell>;
 }

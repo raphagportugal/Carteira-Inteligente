@@ -362,3 +362,18 @@ Fin.`, na rota `/dashboard/objetivos`. A rota `/dashboard/planejamento` foi
 preservada para compatibilidade.
 
 Não há migration nova obrigatória para esta correção.
+## Evolucao de Planejamento, Objetivos e Investimentos
+
+- O Fluxo de Caixa agora possui botao `Ver mais` por mes, com perfil executivo de entradas, saidas, mensalidades, parcelamentos, financiamentos, valor investido, sobra de caixa e maiores movimentacoes.
+- O grafico de sobra mensal mostra valores diretamente nas barras e usa cores mais visiveis para meses futuros.
+- A Visao Geral inclui sobra de caixa do mes, valor investido liquido no mes e resumo de planejado vs executado quando houver metas mensais.
+- Objetivos podem receber alocacoes de investimentos, respeitando o saldo livre da posicao atual.
+- Investimentos permitem registrar saques, que entram como entrada no caixa, atualizam a posicao atual e reduzem o `Valor investido` do mes.
+
+Migration obrigatoria no Supabase:
+
+```sql
+supabase/migrations/20260617_goal_allocations_and_investment_withdrawals.sql
+```
+
+Essa migration cria as tabelas `goal_investment_allocations` e `investment_withdrawals` com RLS.

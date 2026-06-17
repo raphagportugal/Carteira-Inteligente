@@ -180,6 +180,17 @@ export type InvestmentContribution = {
   created_at: string;
 };
 
+export type InvestmentWithdrawal = {
+  id: string;
+  user_id: string;
+  investment_id: string;
+  bank_account_id: string;
+  amount: number;
+  resulting_position: number;
+  withdrawal_date: string;
+  created_at: string;
+};
+
 export type InvestmentValuation = {
   id: string;
   investment_id: string;
@@ -187,6 +198,15 @@ export type InvestmentValuation = {
   amount: number;
   valuation_date: string;
   notes: string | null;
+  created_at: string;
+};
+
+export type GoalInvestmentAllocation = {
+  id: string;
+  user_id: string;
+  goal_id: string;
+  investment_id: string;
+  allocated_amount: number;
   created_at: string;
 };
 

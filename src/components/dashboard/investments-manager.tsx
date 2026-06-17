@@ -2,10 +2,19 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDownToLine, History, Pencil, Plus, Trash2, TrendingUp, X } from "lucide-react";
+import {
+  ArrowDownToLine,
+  History,
+  Pencil,
+  Plus,
+  Trash2,
+  TrendingUp,
+  X,
+} from "lucide-react";
 import {
   createInvestment,
   createInvestmentContribution,
+  createInvestmentWithdrawal,
   deleteInvestment,
   deleteInvestmentContribution,
   updateInvestment,
@@ -22,26 +31,39 @@ import {
 } from "@/lib/finance/investment-position";
 import type {
   BankAccount,
+  GoalInvestmentAllocation,
   Investment,
   InvestmentContribution,
   InvestmentType,
+  InvestmentWithdrawal,
 } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
-const assetTypes = new Set<InvestmentType>(["property", "vehicle", "business_stake", "other_asset"]);
+const assetTypes = new Set<InvestmentType>([
+  "property",
+  "vehicle",
+  "business_stake",
+  "other_asset",
+]);
+
 type Dialog =
   | { kind: "item"; investment: Investment | null }
   | { kind: "contribution"; investment: Investment }
+  | { kind: "withdrawal"; investment: Investment }
   | { kind: "history"; investment: Investment }
   | null;
 
 export function InvestmentsManager({
   investments,
   contributions,
+  withdrawals,
+  allocations,
   accounts,
 }: {
   investments: Investment[];
   contributions: InvestmentContribution[];
+  withdrawals: InvestmentWithdrawal[];
+  allocations: GoalInvestmentAllocation[];
   accounts: BankAccount[];
 }) {
   const router = useRouter();
@@ -49,9 +71,9 @@ export function InvestmentsManager({
   const [selectedType, setSelectedType] = useState<InvestmentType>("fixed_income");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
+
   const typeOf = (item: Investment) => item.asset_type ?? item.type;
-  const positionOf = (item: Investment) =>
-    getInvestmentPosition(item, contributions);
+  const positionOf = (item: Investment) => getInvestmentPosition(item, contributions);
   const investmentsOnly = investments.filter((item) => !assetTypes.has(typeOf(item)));
   const assetsOnly = investments.filter((item) => assetTypes.has(typeOf(item)));
   const invested = investmentsOnly.reduce((sum, item) => sum + positionOf(item), 0);
@@ -66,7 +88,10 @@ export function InvestmentsManager({
   function run(action: () => Promise<{ success: boolean; message?: string }>, message: string) {
     startTransition(async () => {
       const result = await action();
-      if (!result.success) return setError(result.message ?? "Não foi possível concluir.");
+      if (!result.success) {
+        setError(result.message ?? "Nao foi possivel concluir.");
+        return;
+      }
       setDialog(null);
       setError("");
       showSuccess(message);
@@ -83,19 +108,22 @@ export function InvestmentsManager({
       </div>
 
       {investments.length === 0 ? (
-        <EmptyState icon={TrendingUp} title="Nenhum investimento ou bem cadastrado" description="Cadastre sua primeira posição financeira ou bem patrimonial." action={<button onClick={() => openItem(null)} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Cadastrar primeiro item</button>} />
+        <EmptyState icon={TrendingUp} title="Nenhum investimento ou bem cadastrado" description="Cadastre sua primeira posicao financeira ou bem patrimonial." action={<button onClick={() => openItem(null)} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Cadastrar primeiro item</button>} />
       ) : (
         <>
           <section className="mb-8 grid gap-4 sm:grid-cols-3">
             <Metric label="Total investido" value={invested} />
-            <Metric label="Total em patrimônio" value={patrimony} />
-            <div className="rounded-2xl bg-slate-950 p-5 text-white"><p className="text-xs text-slate-400">Patrimônio total consolidado</p><p className="mt-2 text-xl font-extrabold">{formatCurrency(invested + patrimony)}</p></div>
+            <Metric label="Total em patrimonio" value={patrimony} />
+            <div className="rounded-2xl bg-slate-950 p-5 text-white">
+              <p className="text-xs text-slate-400">Patrimonio total consolidado</p>
+              <p className="mt-2 text-xl font-extrabold">{formatCurrency(invested + patrimony)}</p>
+            </div>
           </section>
           <Group title="Investimentos" items={investmentsOnly} positionOf={positionOf} typeOf={typeOf} openItem={openItem} setDialog={setDialog} remove={(item) => {
-            if (window.confirm(`Excluir "${item.name}"?`)) run(() => deleteInvestment(item.id), "Investimento excluído.");
+            if (window.confirm(`Excluir "${item.name}"?`)) run(() => deleteInvestment(item.id), "Investimento excluido.");
           }} />
-          <Group title="Patrimônio" items={assetsOnly} positionOf={positionOf} typeOf={typeOf} openItem={openItem} setDialog={setDialog} remove={(item) => {
-            if (window.confirm(`Excluir "${item.name}"?`)) run(() => deleteInvestment(item.id), "Bem excluído.");
+          <Group title="Patrimonio" items={assetsOnly} positionOf={positionOf} typeOf={typeOf} openItem={openItem} setDialog={setDialog} remove={(item) => {
+            if (window.confirm(`Excluir "${item.name}"?`)) run(() => deleteInvestment(item.id), "Bem excluido.");
           }} />
         </>
       )}
@@ -103,7 +131,7 @@ export function InvestmentsManager({
       {error && <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       {dialog?.kind === "item" && (
-        <Modal title={dialog.investment ? "Editar item" : "Novo investimento ou patrimônio"} close={() => setDialog(null)}>
+        <Modal title={dialog.investment ? "Editar item" : "Novo investimento ou patrimonio"} close={() => setDialog(null)}>
           <form action={(formData) => run(
             () => dialog.investment ? updateInvestment(formData) : createInvestment(formData),
             "Registro atualizado.",
@@ -112,26 +140,26 @@ export function InvestmentsManager({
             <label className="block"><span className="mb-2 block text-sm font-semibold">Nome</span><input name="name" required defaultValue={dialog.investment?.name} className="h-12 w-full rounded-xl border px-4" /></label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label><span className="mb-2 block text-sm font-semibold">Tipo</span><select name="type" required value={selectedType} onChange={(event) => setSelectedType(event.target.value as InvestmentType)} className="h-12 w-full rounded-xl border bg-white px-4">{INVESTMENT_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-              <label><span className="mb-2 block text-sm font-semibold">Instituição/local</span><input name="institution" required defaultValue={dialog.investment?.institution} className="h-12 w-full rounded-xl border px-4" /></label>
+              <label><span className="mb-2 block text-sm font-semibold">Instituicao/local</span><input name="institution" required defaultValue={dialog.investment?.institution} className="h-12 w-full rounded-xl border px-4" /></label>
             </div>
             {assetTypes.has(selectedType) ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <MoneyField name="current_position" label="Valor atual estimado" defaultValue={dialog.investment ? positionOf(dialog.investment) : undefined} />
-                <DateField name="current_position_date" label="Data de referência" defaultValue={dialog.investment ? getInvestmentCurrentDate(dialog.investment) : today()} />
+                <DateField name="current_position_date" label="Data de referencia" defaultValue={dialog.investment ? getInvestmentCurrentDate(dialog.investment) : today()} />
               </div>
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <MoneyField name="initial_value" label="Posição inicial" defaultValue={dialog.investment ? getInvestmentInitialValue(dialog.investment) : undefined} />
-                  <DateField name="initial_date" label="Data da posição inicial" defaultValue={dialog.investment ? getInvestmentInitialDate(dialog.investment) : today()} />
+                  <MoneyField name="initial_value" label="Posicao inicial" defaultValue={dialog.investment ? getInvestmentInitialValue(dialog.investment) : undefined} />
+                  <DateField name="initial_date" label="Data da posicao inicial" defaultValue={dialog.investment ? getInvestmentInitialDate(dialog.investment) : today()} />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <MoneyField name="current_position" label="Posição atual" defaultValue={dialog.investment ? positionOf(dialog.investment) : undefined} />
-                  <DateField name="current_position_date" label="Data da posição atual" defaultValue={dialog.investment ? getInvestmentCurrentDate(dialog.investment) : today()} />
+                  <MoneyField name="current_position" label="Posicao atual" defaultValue={dialog.investment ? positionOf(dialog.investment) : undefined} />
+                  <DateField name="current_position_date" label="Data da posicao atual" defaultValue={dialog.investment ? getInvestmentCurrentDate(dialog.investment) : today()} />
                 </div>
               </>
             )}
-            <label className="block"><span className="mb-2 block text-sm font-semibold">Observação (opcional)</span><textarea name="notes" defaultValue={dialog.investment?.notes ?? ""} className="min-h-24 w-full rounded-xl border p-4 text-sm" /></label>
+            <label className="block"><span className="mb-2 block text-sm font-semibold">Observacao (opcional)</span><textarea name="notes" defaultValue={dialog.investment?.notes ?? ""} className="min-h-24 w-full rounded-xl border p-4 text-sm" /></label>
             <button disabled={pending} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ? "Salvando..." : "Salvar"}</button>
           </form>
         </Modal>
@@ -143,9 +171,23 @@ export function InvestmentsManager({
             <input type="hidden" name="investment_id" value={dialog.investment.id} />
             <MoneyField name="amount" label="Valor" />
             <DateField name="contribution_date" label="Data" defaultValue={today()} />
-            <label className="block"><span className="mb-2 block text-sm font-semibold">Conta de origem</span><select name="bank_account_id" required defaultValue="" className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.bank}{account.account_number ? ` · ${account.account_number}` : ""}</option>)}</select></label>
-            <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">Aportes do mês vigente em diante reduzem a conta e entram no fluxo. Aportes anteriores ficam somente no histórico.</p>
+            <AccountSelect accounts={accounts} label="Conta de origem" />
+            <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">Aportes do mes vigente em diante reduzem a conta e entram no fluxo. Aportes anteriores ficam somente no historico.</p>
             <button disabled={pending || accounts.length === 0} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ? "Salvando..." : "Registrar aporte"}</button>
+          </form>
+        </Modal>
+      )}
+
+      {dialog?.kind === "withdrawal" && (
+        <Modal title={`Sacar de ${dialog.investment.name}`} close={() => setDialog(null)}>
+          <form action={(formData) => run(() => createInvestmentWithdrawal(formData), "Saque registrado.")} className="space-y-4">
+            <input type="hidden" name="investment_id" value={dialog.investment.id} />
+            <MoneyField name="amount" label="Valor liquido sacado" />
+            <MoneyField name="resulting_position" label="Nova posicao atual" />
+            <DateField name="withdrawal_date" label="Data" defaultValue={today()} />
+            <AccountSelect accounts={accounts} label="Conta de destino" />
+            <p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">O saque entra como entrada, reduz o valor investido do mes e atualiza a posicao do investimento.</p>
+            <button disabled={pending || accounts.length === 0} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white">{pending ? "Salvando..." : "Registrar saque"}</button>
           </form>
         </Modal>
       )}
@@ -154,9 +196,11 @@ export function InvestmentsManager({
         <HistoryModal
           investment={dialog.investment}
           contributions={contributions.filter((item) => item.investment_id === dialog.investment.id)}
+          withdrawals={withdrawals.filter((item) => item.investment_id === dialog.investment.id)}
+          allocated={allocations.filter((item) => item.investment_id === dialog.investment.id).reduce((sum, item) => sum + Number(item.allocated_amount), 0)}
           currentPosition={positionOf(dialog.investment)}
           close={() => setDialog(null)}
-          remove={(id) => run(() => deleteInvestmentContribution(id), "Aporte excluído.")}
+          remove={(id) => run(() => deleteInvestmentContribution(id), "Aporte excluido.")}
         />
       )}
     </>
@@ -173,38 +217,85 @@ function Group({ title, items, positionOf, typeOf, openItem, setDialog, remove }
   remove: (item: Investment) => void;
 }) {
   if (!items.length) return null;
-  return <section className="mb-8"><p className="mb-4 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">{title}</p><div className="grid gap-4 lg:grid-cols-2">{items.map((item) => {
-    const asset = assetTypes.has(typeOf(item));
-    return <article key={item.id} className="dashboard-card p-5"><div className="flex gap-4"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-moss-50 text-moss-600"><InvestmentTypeIcon type={typeOf(item)} /></span><div className="min-w-0 flex-1"><h2 className="font-extrabold">{item.name}</h2><p className="text-xs text-slate-400">{item.institution} · {INVESTMENT_TYPES.find((entry) => entry.value === typeOf(item))?.label}</p><p className="mt-3 text-xl font-extrabold">{formatCurrency(positionOf(item))}</p><p className="mt-1 text-xs text-slate-400">Referência: {dateFormatter.format(parseDate(getInvestmentCurrentDate(item)))}</p></div><div className="flex"><button onClick={() => openItem(item)} className="grid size-8 place-items-center text-slate-400"><Pencil className="size-4" /></button><button onClick={() => remove(item)} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button></div></div>{!asset && <div className="mt-5 flex flex-wrap gap-2"><button onClick={() => setDialog({ kind: "contribution", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-moss-50 px-3 py-2 text-xs font-bold text-moss-700"><ArrowDownToLine className="size-3.5" /> Aportar</button><button onClick={() => setDialog({ kind: "history", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold"><History className="size-3.5" /> Histórico</button></div>}</article>;
-  })}</div></section>;
+  return (
+    <section className="mb-8">
+      <p className="mb-4 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">{title}</p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {items.map((item) => {
+          const asset = assetTypes.has(typeOf(item));
+          return (
+            <article key={item.id} className="dashboard-card p-5">
+              <div className="flex gap-4">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-moss-50 text-moss-600"><InvestmentTypeIcon type={typeOf(item)} /></span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-extrabold">{item.name}</h2>
+                  <p className="text-xs text-slate-400">{item.institution} - {INVESTMENT_TYPES.find((entry) => entry.value === typeOf(item))?.label}</p>
+                  <p className="mt-3 text-xl font-extrabold">{formatCurrency(positionOf(item))}</p>
+                  <p className="mt-1 text-xs text-slate-400">Referencia: {dateFormatter.format(parseDate(getInvestmentCurrentDate(item)))}</p>
+                </div>
+                <div className="flex">
+                  <button onClick={() => openItem(item)} className="grid size-8 place-items-center text-slate-400"><Pencil className="size-4" /></button>
+                  <button onClick={() => remove(item)} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button>
+                </div>
+              </div>
+              {!asset && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <button onClick={() => setDialog({ kind: "contribution", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-moss-50 px-3 py-2 text-xs font-bold text-moss-700"><ArrowDownToLine className="size-3.5" /> Aportar</button>
+                  <button onClick={() => setDialog({ kind: "withdrawal", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"><ArrowDownToLine className="size-3.5 rotate-180" /> Sacar</button>
+                  <button onClick={() => setDialog({ kind: "history", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold"><History className="size-3.5" /> Historico</button>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
-function HistoryModal({ investment, contributions, currentPosition, close, remove }: {
+function HistoryModal({ investment, contributions, withdrawals, allocated, currentPosition, close, remove }: {
   investment: Investment;
   contributions: InvestmentContribution[];
+  withdrawals: InvestmentWithdrawal[];
+  allocated: number;
   currentPosition: number;
   close: () => void;
   remove: (id: string) => void;
 }) {
   const initial = getInvestmentInitialValue(investment);
   const difference = currentPosition - initial;
-  return <Modal title={`Histórico · ${investment.name}`} close={close}>
-    <div className="grid gap-3 sm:grid-cols-3">
-      <Metric label="Posição inicial" value={initial} />
-      <Metric label="Total aportado" value={contributions.reduce((sum, item) => sum + Number(item.amount), 0)} />
-      <div className="rounded-xl bg-slate-950 p-4 text-white"><p className="text-xs text-slate-400">Posição atual informada</p><p className="mt-2 text-lg font-extrabold">{formatCurrency(currentPosition)}</p></div>
-    </div>
-    <div className="mt-5 rounded-xl bg-slate-50 p-4"><div className="flex justify-between text-xs"><span>Evolução simples</span><strong className={difference >= 0 ? "text-emerald-600" : "text-red-600"}>{difference >= 0 ? "+" : ""}{formatCurrency(difference)}</strong></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-moss-500" style={{ width: `${Math.min(100, currentPosition > 0 ? initial / currentPosition * 100 : 0)}%` }} /></div></div>
-    <div className="mt-6 space-y-2">
-      <Timeline label="Posição inicial" date={getInvestmentInitialDate(investment)} amount={initial} />
-      {contributions.sort((a, b) => a.contribution_date.localeCompare(b.contribution_date)).map((item) => <Timeline key={item.id} label={item.impacts_cash_flow === false ? "Aporte histórico" : "Aporte realizado"} date={item.contribution_date} amount={Number(item.amount)} remove={() => remove(item.id)} />)}
-      <Timeline label="Posição atual informada" date={getInvestmentCurrentDate(investment)} amount={currentPosition} />
-    </div>
-  </Modal>;
+  const freeBalance = Math.max(0, currentPosition - allocated);
+  return (
+    <Modal title={`Historico - ${investment.name}`} close={close}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Metric label="Posicao inicial" value={initial} />
+        <Metric label="Total aportado" value={contributions.reduce((sum, item) => sum + Number(item.amount), 0)} />
+        <div className="rounded-xl bg-slate-950 p-4 text-white"><p className="text-xs text-slate-400">Posicao atual informada</p><p className="mt-2 text-lg font-extrabold">{formatCurrency(currentPosition)}</p></div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <Metric label="Alocado em objetivos" value={allocated} />
+        <Metric label="Saldo livre" value={freeBalance} />
+      </div>
+      <div className="mt-5 rounded-xl bg-slate-50 p-4">
+        <div className="flex justify-between text-xs"><span>Evolucao simples</span><strong className={difference >= 0 ? "text-emerald-600" : "text-red-600"}>{difference >= 0 ? "+" : ""}{formatCurrency(difference)}</strong></div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-moss-500" style={{ width: `${Math.min(100, currentPosition > 0 ? initial / currentPosition * 100 : 0)}%` }} /></div>
+      </div>
+      <div className="mt-6 space-y-2">
+        <Timeline label="Posicao inicial" date={getInvestmentInitialDate(investment)} amount={initial} />
+        {contributions.sort((a, b) => a.contribution_date.localeCompare(b.contribution_date)).map((item) => <Timeline key={item.id} label={item.impacts_cash_flow === false ? "Aporte historico" : "Aporte realizado"} date={item.contribution_date} amount={Number(item.amount)} remove={() => remove(item.id)} />)}
+        {withdrawals.sort((a, b) => a.withdrawal_date.localeCompare(b.withdrawal_date)).map((item) => <Timeline key={item.id} label="Saque realizado" date={item.withdrawal_date} amount={-Number(item.amount)} />)}
+        <Timeline label="Posicao atual informada" date={getInvestmentCurrentDate(investment)} amount={currentPosition} />
+      </div>
+    </Modal>
+  );
 }
 
 function Timeline({ label, date, amount, remove }: { label: string; date: string; amount: number; remove?: () => void }) {
-  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="size-2 rounded-full bg-moss-500" /><div className="flex-1"><p className="text-sm font-bold">{label}</p><p className="text-xs text-slate-400">{dateFormatter.format(parseDate(date))}</p></div><p className="text-sm font-extrabold">{formatCurrency(amount)}</p>{remove && <button onClick={remove} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button>}</div>;
+  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="size-2 rounded-full bg-moss-500" /><div className="flex-1"><p className="text-sm font-bold">{label}</p><p className="text-xs text-slate-400">{dateFormatter.format(parseDate(date))}</p></div><p className={`text-sm font-extrabold ${amount < 0 ? "text-red-600" : ""}`}>{formatCurrency(amount)}</p>{remove && <button onClick={remove} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button>}</div>;
+}
+
+function AccountSelect({ accounts, label }: { accounts: BankAccount[]; label: string }) {
+  return <label className="block"><span className="mb-2 block text-sm font-semibold">{label}</span><select name="bank_account_id" required defaultValue="" className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.bank}{account.account_number ? ` - ${account.account_number}` : ""}</option>)}</select></label>;
 }
 
 function MoneyField({ name, label, defaultValue }: { name: string; label: string; defaultValue?: number }) {

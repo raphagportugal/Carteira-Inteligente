@@ -11,10 +11,10 @@ import {
   GOAL_STATUSES,
 } from "@/lib/finance/catalogs";
 import { dateFormatter, formatCurrency, parseDate } from "@/lib/finance/format";
-import type { Goal } from "@/lib/finance/types";
+import type { Goal, GoalInvestmentAllocation } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
-export function GoalsManager({ goals }: { goals: Goal[] }) {
+export function GoalsManager({ goals, allocations = [] }: { goals: Goal[]; allocations?: GoalInvestmentAllocation[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Goal | null>(null);
   const [open, setOpen] = useState(false);
@@ -68,7 +68,9 @@ export function GoalsManager({ goals }: { goals: Goal[] }) {
       ) : (
         <section className="grid gap-5 lg:grid-cols-3">
           {goals.map((goal, index) => {
-            const progress = Math.min(100, Math.round((Number(goal.current_amount) / Number(goal.target_amount)) * 100));
+            const allocated = allocations.filter((item) => item.goal_id === goal.id).reduce((sum, item) => sum + Number(item.allocated_amount), 0);
+            const currentAmount = Number(goal.current_amount) + allocated;
+            const progress = Math.min(100, Math.round((currentAmount / Number(goal.target_amount)) * 100));
             return (
               <article key={goal.id} className={`rounded-2xl p-6 ${index === 0 ? "bg-slate-950 text-white" : "dashboard-card"}`}>
                 <div className="flex justify-between">
@@ -78,7 +80,7 @@ export function GoalsManager({ goals }: { goals: Goal[] }) {
                 <div className="mt-5 flex gap-2"><span className="rounded-full bg-moss-500/10 px-2.5 py-1 text-[10px] font-bold text-moss-500">{GOAL_PRIORITIES.find((item) => item.value === goal.priority)?.label}</span><span className="rounded-full bg-slate-500/10 px-2.5 py-1 text-[10px] font-bold text-slate-400">{GOAL_STATUSES.find((item) => item.value === goal.status)?.label}</span></div>
                 <h2 className="mt-4 text-lg font-extrabold">{goal.name}</h2>
                 <p className="mt-1 text-xs text-slate-400">{goal.category} · {dateFormatter.format(parseDate(goal.target_date))}</p>
-                <div className="mt-7 flex items-end justify-between"><div><p className="text-2xl font-extrabold">{formatCurrency(Number(goal.current_amount))}</p><p className="text-xs text-slate-400">de {formatCurrency(Number(goal.target_amount))}</p></div><strong className="text-moss-500">{progress}%</strong></div>
+                <div className="mt-7 flex items-end justify-between"><div><p className="text-2xl font-extrabold">{formatCurrency(currentAmount)}</p><p className="text-xs text-slate-400">de {formatCurrency(Number(goal.target_amount))}</p>{allocated > 0 && <p className="mt-1 text-[10px] font-bold text-moss-500">Inclui {formatCurrency(allocated)} alocados</p>}</div><strong className="text-moss-500">{progress}%</strong></div>
                 <div className={`mt-4 h-2 overflow-hidden rounded-full ${index === 0 ? "bg-white/10" : "bg-slate-100"}`}><div className="h-full rounded-full bg-moss-500" style={{ width: `${progress}%` }} /></div>
               </article>
             );

@@ -8,10 +8,12 @@ import type {
   FinancingPaymentStatus,
   FinancialPlan,
   Goal,
+  GoalInvestmentAllocation,
   IncomeForecast,
   Investment,
   InvestmentContribution,
   InvestmentValuation,
+  InvestmentWithdrawal,
   Installment,
   MonthlyBill,
   Transaction,
@@ -204,6 +206,19 @@ export async function getInvestmentContributions() {
   return (data ?? []) as InvestmentContribution[];
 }
 
+export async function getInvestmentWithdrawals() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("investment_withdrawals")
+    .select("*")
+    .order("withdrawal_date", { ascending: false });
+  if (error) {
+    console.error("Unable to load investment withdrawals:", error.message);
+    return [] as InvestmentWithdrawal[];
+  }
+  return (data ?? []) as InvestmentWithdrawal[];
+}
+
 export async function getInvestmentValuations() {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -215,6 +230,19 @@ export async function getInvestmentValuations() {
     return [] as InvestmentValuation[];
   }
   return (data ?? []) as InvestmentValuation[];
+}
+
+export async function getGoalInvestmentAllocations() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("goal_investment_allocations")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Unable to load goal investment allocations:", error.message);
+    return [] as GoalInvestmentAllocation[];
+  }
+  return (data ?? []) as GoalInvestmentAllocation[];
 }
 
 export async function getIncomeForecasts() {
