@@ -20,7 +20,7 @@ const capabilities = [
     icon: WalletCards,
     title: "Visão completa da vida financeira",
     description:
-      "Receitas, despesas e compromissos reunidos para mostrar quanto está realmente disponível.",
+      "Entradas, despesas e compromissos reunidos para mostrar quanto está realmente disponível.",
   },
   {
     icon: CalendarRange,
@@ -134,7 +134,7 @@ export default function Home() {
                   </div>
                   <div className="mt-7 grid grid-cols-3 gap-3">
                     {[
-                      ["Receitas", "R$ 9.350"],
+                      ["Entradas", "R$ 9.350"],
                       ["Compromissos", "R$ 5.920"],
                       ["Poupança", "R$ 1.870"],
                     ].map(([label, value]) => (

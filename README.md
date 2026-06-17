@@ -15,7 +15,7 @@ Domínio do produto: [acarteirainteligente.com.br](https://acarteirainteligente.
 - Movimentações manuais com criação, edição e exclusão
 - Contas bancárias com saldo atual, identidade visual por banco e Caixa
   Centralizado no dashboard
-- Receitas e despesas vinculadas à conta de origem ou destino; compras no
+- Entradas e despesas vinculadas à conta de origem ou destino; compras no
   cartão permanecem vinculadas ao cartão utilizado
 - Transferências entre contas sem impacto em receitas ou despesas
 - Despesas no cartão vinculadas ao cartão utilizado, preservando a data da
@@ -53,15 +53,21 @@ Domínio do produto: [acarteirainteligente.com.br](https://acarteirainteligente.
   caixa atual
 - Bens patrimoniais com valor atual estimado editável e sem impacto no fluxo
 - Planejamento Financeiro com metas mensais por categoria
-- Fluxo de caixa compacto com Entradas, Saídas, Investido no mês, Sobra de
+- Fluxo de caixa compacto com Entradas, Saídas, Valor investido, Sobra de
   caixa e comparação Planejado vs Executado
 - Baixa manual de parcelas vencidas em Financiamentos e Empréstimos
-- Receitas futuras por mês
+- Entradas futuras por mês
 - Evolução patrimonial simplificada e compromissos dos próximos 90 dias
 - Formulários validados no cliente e no servidor
 - Configurações da conta
 - Extrato completo em `/dashboard/movimentacoes`, agrupado por mês, com busca,
   filtros, edição e exclusão
+- Perfil simples no avatar do usuário, com nome de exibição e avatares padrão
+- Mensalidades vinculadas a conta bancária ou cartão, com status pago,
+  pendente e futuro para mês anterior, atual e próximo
+- Movimentações reais podem ser vinculadas a mensalidades para evitar
+  duplicidade no fluxo de caixa
+- Loading states minimalistas em autenticação e navegação autenticada
 
 Upload de PDF e inteligência artificial ainda não fazem parte desta etapa.
 
@@ -205,7 +211,7 @@ npm run build
 ## Escopo atual
 
 Movimentações, cartões, parcelamentos, mensalidades, financiamentos e
-empréstimos, objetivos e investimentos possuem CRUD persistido no Supabase. Receitas futuras são
+empréstimos, objetivos e investimentos possuem CRUD persistido no Supabase. Entradas futuras são
 mantidas por mês. Todos os compromissos impactam automaticamente os indicadores
 e o fluxo de caixa.
 
@@ -271,7 +277,7 @@ Essa migration:
 
 O fluxo de caixa não utiliza saldo acumulado. A regra exibida é:
 
-`Sobra de caixa = Entradas - Saídas - Investimentos realizados`
+`Sobra de caixa = Entradas - Saídas - Valor investido`
 
 Upload de PDFs, integração bancária e inteligência artificial não fazem parte
 desta versão.
@@ -297,7 +303,7 @@ Caixa**. Movimentações comuns passam a exigir uma conta. Compras no cartão de
 crédito continuam exigindo o cartão e usam a data de vencimento da fatura no
 fluxo.
 
-O Caixa Centralizado é a soma dos saldos de `bank_accounts`. Receitas,
+O Caixa Centralizado é a soma dos saldos de `bank_accounts`. Entradas,
 despesas, transferências e aportes atualizam esses saldos automaticamente.
 
 A posição de um investimento é sempre calculada:
@@ -323,3 +329,36 @@ A tabela legada `investment_valuations` não é apagada, preservando dados
 existentes, mas novos registros de valorização não fazem mais parte da
 interface. O histórico de movimentações usa `transaction_date`; somente o
 fluxo de caixa utiliza `cash_flow_date`.
+
+## Ajustes Finais de UX e Lógica Financeira
+
+Execute no SQL Editor do Supabase:
+
+[`supabase/migrations/20260616_v1_ux_finance.sql`](supabase/migrations/20260616_v1_ux_finance.sql)
+
+Essa migration adiciona:
+
+- `transactions.monthly_bill_id`;
+- `monthly_bills.bank_account_id`;
+- `monthly_bills.credit_card_id`;
+- índice `transactions_monthly_bill_idx`.
+
+Categorias de movimentações foram separadas entre entradas e saídas. A
+categoria é opcional; quando vazia, o app grava `Sem categoria`.
+
+## Correção de Mensalidades e Menu
+
+Nesta revisão, mensalidades passam a ser avaliadas por ocorrência mensal:
+
+- meses anteriores ao mês de início aparecem como `não iniciado`;
+- mensalidades pagas por conta impactam o fluxo no dia de vencimento;
+- mensalidades pagas por cartão usam o ciclo de fechamento e vencimento do
+  cartão para definir o impacto no fluxo;
+- movimentações reais vinculadas a mensalidades marcam a ocorrência como paga
+  e evitam duplicidade no fluxo.
+
+O menu `Planejamento Financeiro` foi unificado em `Objetivos e Planejamento
+Fin.`, na rota `/dashboard/objetivos`. A rota `/dashboard/planejamento` foi
+preservada para compatibilidade.
+
+Não há migration nova obrigatória para esta correção.

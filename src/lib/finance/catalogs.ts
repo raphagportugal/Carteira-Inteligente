@@ -1,4 +1,23 @@
-export const FINANCIAL_CATEGORIES = [
+export const INCOME_CATEGORIES = [
+  "Salário",
+  "Pró-Labore",
+  "Distribuição de Lucros",
+  "Comissão",
+  "Freelance",
+  "Reembolso",
+  "Estorno",
+  "Saque de Investimento",
+  "Empréstimo Recebido",
+  "Venda de Bens",
+  "Aluguel Recebido",
+  "Dividendos",
+  "Rendimentos",
+  "Presente/Doação",
+  "Transferência de Terceiros",
+  "Outros recebimentos",
+] as const;
+
+export const EXPENSE_CATEGORIES = [
   "Alimentação",
   "Assinaturas",
   "Casa",
@@ -8,11 +27,18 @@ export const FINANCIAL_CATEGORIES = [
   "Lazer",
   "Moradia",
   "Outros",
-  "Salário",
   "Saúde",
   "Serviços",
   "Transporte",
   "Vestuário",
+] as const;
+
+export const UNCATEGORIZED = "Sem categoria";
+
+export const FINANCIAL_CATEGORIES = [
+  ...INCOME_CATEGORIES,
+  ...EXPENSE_CATEGORIES,
+  UNCATEGORIZED,
 ] as const;
 
 export const PAYMENT_METHODS = [

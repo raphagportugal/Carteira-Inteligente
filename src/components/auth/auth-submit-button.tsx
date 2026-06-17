@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type AuthSubmitButtonProps = {
@@ -16,6 +17,7 @@ export function AuthSubmitButton({
 
   return (
     <Button type="submit" className="w-full" disabled={pending}>
+      {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
       {pending ? pendingLabel : label}
     </Button>
   );

@@ -11,7 +11,7 @@ import {
 } from "@/app/dashboard/actions";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { CategoryIcon } from "@/components/dashboard/category-icon";
-import { FINANCIAL_CATEGORIES } from "@/lib/finance/catalogs";
+import { EXPENSE_CATEGORIES } from "@/lib/finance/catalogs";
 import { dateFormatter, formatCurrency, parseDate } from "@/lib/finance/format";
 import {
   getInstallmentSchedule,
@@ -211,7 +211,7 @@ export function InstallmentsManager({
               {editing && <input type="hidden" name="id" value={editing.id} />}
               <div className="grid gap-4 sm:grid-cols-2">
                 <label><span className="mb-2 block text-sm font-semibold">Descrição</span><input name="description" required maxLength={120} defaultValue={editing?.name} placeholder="Ex.: Notebook" className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" /></label>
-                <label><span className="mb-2 block text-sm font-semibold">Categoria</span><select name="category" required defaultValue={editing?.category ?? ""} className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"><option value="" disabled>Selecione</option>{FINANCIAL_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></label>
+                <label><span className="mb-2 block text-sm font-semibold">Categoria</span><select name="category" required defaultValue={editing?.category ?? ""} className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"><option value="" disabled>Selecione</option>{EXPENSE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></label>
               </div>
               <label className="block"><span className="mb-2 block text-sm font-semibold">Cartão</span><select name="credit_card_id" required defaultValue={editing?.credit_card_id ?? ""} className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"><option value="" disabled>Selecione</option>{cards.map((card) => <option key={card.id} value={card.id}>{card.name} •••• {card.last_four_digits}</option>)}</select></label>
               <div className="grid gap-4 sm:grid-cols-2">

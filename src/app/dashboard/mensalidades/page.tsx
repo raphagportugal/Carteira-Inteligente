@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { MonthlyBillsManager } from "@/components/dashboard/monthly-bills-manager";
 import { PageHeading } from "@/components/dashboard/page-heading";
-import { getMonthlyBills } from "@/lib/finance/queries";
+import { getBankAccounts, getCreditCards, getMonthlyBills, getTransactions } from "@/lib/finance/queries";
 
 export const metadata: Metadata = { title: "Mensalidades" };
 
 export default async function MonthlyBillsPage() {
-  const bills = await getMonthlyBills();
+  const [bills, accounts, cards, transactions] = await Promise.all([
+    getMonthlyBills(),
+    getBankAccounts(),
+    getCreditCards(),
+    getTransactions(),
+  ]);
 
   return (
     <>
@@ -15,7 +20,7 @@ export default async function MonthlyBillsPage() {
         title="Mensalidades"
         description="Cadastre compromissos recorrentes para incluí-los nas despesas e projeções futuras."
       />
-      <MonthlyBillsManager bills={bills} />
+      <MonthlyBillsManager bills={bills} accounts={accounts} cards={cards} transactions={transactions} />
     </>
   );
 }

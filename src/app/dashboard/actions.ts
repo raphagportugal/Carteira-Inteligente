@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import {
   BANKS,
   CREDIT_CARD_PAYMENT_METHOD,
+  EXPENSE_CATEGORIES,
   FINANCIAL_CATEGORIES,
+  INCOME_CATEGORIES,
   FINANCING_RATE_INDEXES,
   FINANCING_RATE_TYPES,
   FINANCING_TYPES,
@@ -13,6 +15,7 @@ import {
   INVESTMENT_TYPES,
   MONTHLY_BILL_STATUSES,
   PAYMENT_METHODS,
+  UNCATEGORIZED,
 } from "@/lib/finance/catalogs";
 import {
   buildMonthlyFinancingSchedule,
@@ -28,6 +31,8 @@ export type ActionResult =
 
 const validTransactionTypes = new Set(["income", "expense"]);
 const validCategories = new Set<string>(FINANCIAL_CATEGORIES);
+const validIncomeCategories = new Set<string>(INCOME_CATEGORIES);
+const validExpenseCategories = new Set<string>(EXPENSE_CATEGORIES);
 const validPaymentMethods = new Set<string>(PAYMENT_METHODS);
 const validMonthlyBillStatuses = new Set<string>(
   MONTHLY_BILL_STATUSES.map((status) => status.value),
@@ -153,6 +158,10 @@ function transactionBalanceEffect(transaction: {
     : -Number(transaction.amount);
 }
 
+function normalizedCategory(formData: FormData, key: string) {
+  return requiredText(formData, key) || UNCATEGORIZED;
+}
+
 async function transactionPayload(
   formData: FormData,
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -161,11 +170,12 @@ async function transactionPayload(
   const type = requiredText(formData, "type");
   const description = requiredText(formData, "description");
   const amount = positiveNumber(formData, "amount");
-  const category = requiredText(formData, "category");
+  const category = normalizedCategory(formData, "category");
   const paymentMethod = requiredText(formData, "payment_method");
   const transactionDate = requiredText(formData, "transaction_date");
   const creditCardId = requiredText(formData, "credit_card_id");
   const bankAccountId = requiredText(formData, "bank_account_id");
+  const monthlyBillId = requiredText(formData, "monthly_bill_id");
   const usesCreditCard =
     type === "expense" && paymentMethod === CREDIT_CARD_PAYMENT_METHOD;
 
@@ -175,12 +185,24 @@ async function transactionPayload(
     description.length > 120 ||
     amount === null ||
     !validCategories.has(category) ||
+    (type === "income" && category !== UNCATEGORIZED && !validIncomeCategories.has(category)) ||
+    (type === "expense" && category !== UNCATEGORIZED && !validExpenseCategories.has(category)) ||
     !validPaymentMethods.has(paymentMethod) ||
     !validDate(transactionDate) ||
     (usesCreditCard && !creditCardId) ||
     (!usesCreditCard && !bankAccountId)
   ) {
     return null;
+  }
+
+  if (monthlyBillId) {
+    const { data: bill, error } = await supabase
+      .from("monthly_bills")
+      .select("id")
+      .eq("id", monthlyBillId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error || !bill) return null;
   }
 
   let cashFlowDate = transactionDate;
@@ -212,6 +234,7 @@ async function transactionPayload(
     transaction_date: transactionDate,
     credit_card_id: usesCreditCard ? creditCardId : null,
     bank_account_id: usesCreditCard ? null : bankAccountId,
+    monthly_bill_id: monthlyBillId || null,
     cash_flow_date: cashFlowDate,
   };
 }
@@ -760,9 +783,11 @@ export async function deleteCreditCard(id: string): Promise<ActionResult> {
 
 function monthlyBillPayload(formData: FormData) {
   const name = requiredText(formData, "name");
-  const category = requiredText(formData, "category");
+  const category = normalizedCategory(formData, "category");
   const monthlyAmount = positiveNumber(formData, "monthly_amount");
   const paymentMethod = requiredText(formData, "payment_method");
+  const bankAccountId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ? "" : requiredText(formData, "bank_account_id");
+  const creditCardId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ? requiredText(formData, "credit_card_id") : "";
   const dueDay = dayOfMonth(formData, "due_day");
   const startDate = requiredText(formData, "start_date");
   const endDate = requiredText(formData, "end_date");
@@ -771,8 +796,10 @@ function monthlyBillPayload(formData: FormData) {
   if (
     !name ||
     !validCategories.has(category) ||
+    (category !== UNCATEGORIZED && !validExpenseCategories.has(category)) ||
     monthlyAmount === null ||
     !validPaymentMethods.has(paymentMethod) ||
+    (paymentMethod === CREDIT_CARD_PAYMENT_METHOD && !creditCardId) ||
     dueDay === null ||
     !validDate(startDate) ||
     (endDate && (!validDate(endDate) || endDate < startDate)) ||
@@ -786,11 +813,29 @@ function monthlyBillPayload(formData: FormData) {
     category,
     monthly_amount: monthlyAmount,
     payment_method: paymentMethod,
+    bank_account_id: bankAccountId || null,
+    credit_card_id: creditCardId || null,
     due_day: dueDay,
     start_date: startDate,
     end_date: endDate || null,
     status,
   };
+}
+
+export async function updateUserProfile(formData: FormData): Promise<ActionResult> {
+  const name = requiredText(formData, "name");
+  const avatar = requiredText(formData, "avatar");
+  if (!name || name.length < 2 || name.length > 80 || !["slate", "teal", "gold", "rose"].includes(avatar)) {
+    return { success: false, message: "Revise os dados do perfil." };
+  }
+  const { supabase, user } = await getAuthenticatedContext();
+  if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
+  const { error } = await supabase.auth.updateUser({
+    data: { ...user.user_metadata, name, avatar },
+  });
+  if (error) return databaseError(`Unable to update profile: ${error.message}`);
+  revalidatePath("/dashboard", "layout");
+  return { success: true };
 }
 
 export async function createMonthlyBill(formData: FormData): Promise<ActionResult> {
@@ -1128,7 +1173,7 @@ export async function createInvestmentContribution(formData: FormData): Promise<
   const { supabase, user } = await getAuthenticatedContext();
   if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
   const [{ data: investment }, { data: account }] = await Promise.all([
-    supabase.from("investments").select("id").eq("id", investmentId).eq("user_id", user.id).maybeSingle(),
+    supabase.from("investments").select("id, current_position, current_value").eq("id", investmentId).eq("user_id", user.id).maybeSingle(),
     supabase.from("bank_accounts").select("id").eq("id", bankAccountId).eq("user_id", user.id).maybeSingle(),
   ]);
   if (!investment || !account) return { success: false, message: "Investimento ou conta inválida." };
@@ -1157,6 +1202,18 @@ export async function createInvestmentContribution(formData: FormData): Promise<
     }
     return databaseError(`Unable to create investment contribution: ${error.message}`);
   }
+  const nextPosition = Number(investment.current_position ?? investment.current_value) + amount;
+  const { error: positionError } = await supabase
+    .from("investments")
+    .update({
+      current_position: nextPosition,
+      current_position_date: contributionDate,
+      current_value: nextPosition,
+      reference_date: contributionDate,
+    })
+    .eq("id", investmentId)
+    .eq("user_id", user.id);
+  if (positionError) return databaseError(`Unable to update investment position: ${positionError.message}`);
   revalidateFinancialPages();
   return { success: true };
 }
@@ -1166,11 +1223,16 @@ export async function deleteInvestmentContribution(id: string): Promise<ActionRe
   if (!user) return { success: false, message: "Sua sessão expirou. Entre novamente." };
   const { data: contribution } = await supabase
     .from("investment_contributions")
-    .select("*")
+    .select("*, investments(current_position, current_value)")
     .eq("id", id)
     .eq("user_id", user.id)
     .maybeSingle();
   if (!contribution) return { success: false, message: "Aporte não encontrado." };
+  const currentPosition = Number(
+    contribution.investments?.current_position ??
+      contribution.investments?.current_value ??
+      0,
+  );
   if (
     contribution.impacts_cash_flow !== false &&
     !(await adjustAccountBalance(
@@ -1186,6 +1248,13 @@ export async function deleteInvestmentContribution(id: string): Promise<ActionRe
     .eq("id", id)
     .eq("user_id", user.id);
   if (error) return databaseError(`Unable to delete investment contribution: ${error.message}`);
+  await supabase
+    .from("investments")
+    .update({
+      current_position: Math.max(0, currentPosition - Number(contribution.amount)),
+    })
+    .eq("id", contribution.investment_id)
+    .eq("user_id", user.id);
   revalidateFinancialPages();
   return { success: true };
 }
