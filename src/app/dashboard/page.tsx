@@ -106,7 +106,7 @@ export default async function DashboardPage() {
     .filter((transaction) => transaction.type === "income")
     .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
   const monthlyExpenses = currentMonth
-    .filter((transaction) => transaction.type === "expense")
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
     .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
   const today = new Date().toISOString().slice(0, 10);
   const cardsById = new Map(creditCards.map((card) => [card.id, card]));
@@ -174,7 +174,7 @@ export default async function DashboardPage() {
   const totalAssets = centralizedCash + registeredPatrimony;
 
   const categoryTotals = currentMonth
-    .filter((transaction) => transaction.type === "expense")
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
     .reduce<Record<string, number>>((totals, transaction) => {
       totals[transaction.category] =
         (totals[transaction.category] ?? 0) + Number(transaction.amount);
@@ -262,7 +262,9 @@ export default async function DashboardPage() {
           sum +
           (transaction.type === "income"
             ? Number(transaction.amount)
-            : -Number(transaction.amount)),
+            : transaction.monthly_bill_id
+              ? 0
+              : -Number(transaction.amount)),
         0,
       );
     return { date, net };

@@ -786,8 +786,8 @@ function monthlyBillPayload(formData: FormData) {
   const category = normalizedCategory(formData, "category");
   const monthlyAmount = positiveNumber(formData, "monthly_amount");
   const paymentMethod = requiredText(formData, "payment_method");
-  const bankAccountId = requiredText(formData, "bank_account_id");
-  const creditCardId = requiredText(formData, "credit_card_id");
+  const bankAccountId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ? "" : requiredText(formData, "bank_account_id");
+  const creditCardId = paymentMethod === CREDIT_CARD_PAYMENT_METHOD ? requiredText(formData, "credit_card_id") : "";
   const dueDay = dayOfMonth(formData, "due_day");
   const startDate = requiredText(formData, "start_date");
   const endDate = requiredText(formData, "end_date");
@@ -799,8 +799,7 @@ function monthlyBillPayload(formData: FormData) {
     (category !== UNCATEGORIZED && !validExpenseCategories.has(category)) ||
     monthlyAmount === null ||
     !validPaymentMethods.has(paymentMethod) ||
-    (!bankAccountId && !creditCardId) ||
-    (bankAccountId && creditCardId) ||
+    (paymentMethod === CREDIT_CARD_PAYMENT_METHOD && !creditCardId) ||
     dueDay === null ||
     !validDate(startDate) ||
     (endDate && (!validDate(endDate) || endDate < startDate)) ||

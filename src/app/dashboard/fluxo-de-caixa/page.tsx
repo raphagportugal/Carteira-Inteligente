@@ -62,7 +62,7 @@ export default async function CashFlowPage() {
     const monthTransactions = transactions.filter((item) => getTransactionCashFlowDate(item) >= start && getTransactionCashFlowDate(item) <= end);
     const realizedIncome = monthTransactions.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount), 0);
     const predictedIncome = forecasts.filter((item) => item.month === start).reduce((sum, item) => sum + Number(item.expected_income), 0);
-    const transactionExpenses = monthTransactions.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount), 0);
+    const transactionExpenses = monthTransactions.filter((item) => item.type === "expense" && !item.monthly_bill_id).reduce((sum, item) => sum + Number(item.amount), 0);
     const installmentExpenses = installments.reduce((sum, item) => sum + getInstallmentSchedule(item, item.credit_card_id ? cardsById.get(item.credit_card_id) : undefined).filter((entry) => entry.dueDate >= start && entry.dueDate <= end).reduce((value, entry) => value + entry.amount, 0), 0);
     const financingExpenses = financings.reduce((sum, item) => sum + financingAmountInMonth(item, customPayments.filter((payment) => payment.financing_id === item.id), start, end), 0);
     const recurringExpenses = projectedMonthlyBillAmountInRange({
@@ -80,7 +80,7 @@ export default async function CashFlowPage() {
     const planned = monthPlans.reduce((sum, plan) => sum + Number(plan.planned_amount), 0);
     const executedByCategory = monthPlans.map((plan) => ({
       ...plan,
-      executed: monthTransactions.filter((item) => item.type === "expense" && item.category === plan.category).reduce((sum, item) => sum + Number(item.amount), 0),
+      executed: monthTransactions.filter((item) => item.type === "expense" && !item.monthly_bill_id && item.category === plan.category).reduce((sum, item) => sum + Number(item.amount), 0),
     }));
     return { date, entries, expenses, invested, leftover, planned, executed: transactionExpenses, executedByCategory, transactionExpenses, installmentExpenses, financingExpenses, recurringExpenses, realized: index === 0 };
   });
