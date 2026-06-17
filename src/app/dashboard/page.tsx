@@ -44,6 +44,7 @@ import {
   getInstallments,
   getInvestments,
   getInvestmentContributions,
+  getInvestmentWithdrawals,
   getMonthlyBills,
   getTransactions,
 } from "@/lib/finance/queries";
@@ -65,6 +66,7 @@ export default async function DashboardPage() {
     creditCards,
     bankAccounts,
     investmentContributions,
+    investmentWithdrawals,
     recentTransactions,
   ] = await Promise.all([
     getTransactions(),
@@ -77,6 +79,7 @@ export default async function DashboardPage() {
     getCreditCards(),
     getBankAccounts(),
     getInvestmentContributions(),
+    getInvestmentWithdrawals(),
     getTransactions({ limit: 5 }),
   ]);
 
@@ -130,11 +133,11 @@ export default async function DashboardPage() {
 
   const monthlyIncome = sumTransactions(currentMonth, "income");
   const monthlyExpenses = currentMonth
-    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id && transaction.category !== "Investimentos")
     .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
   const previousIncome = sumTransactions(previousMonth, "income");
   const previousExpenses = previousMonth
-    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id)
+    .filter((transaction) => transaction.type === "expense" && !transaction.monthly_bill_id && transaction.category !== "Investimentos")
     .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
 
   const monthlyInstallments = installments.reduce((sum, installment) => {
@@ -200,13 +203,21 @@ export default async function DashboardPage() {
   const monthlyInvested = investmentContributions
     .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= start && item.contribution_date <= end)
     .reduce((sum, item) => sum + Number(item.amount), 0);
+  const monthlyWithdrawn = investmentWithdrawals
+    .filter((item) => item.withdrawal_date >= start && item.withdrawal_date <= end)
+    .reduce((sum, item) => sum + Number(item.amount), 0);
   const previousInvested = investmentContributions
     .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= previousMonthRange.start && item.contribution_date <= previousMonthRange.end)
     .reduce((sum, item) => sum + Number(item.amount), 0);
+  const previousWithdrawn = investmentWithdrawals
+    .filter((item) => item.withdrawal_date >= previousMonthRange.start && item.withdrawal_date <= previousMonthRange.end)
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+  const monthlyInvestedNet = monthlyInvested - monthlyWithdrawn;
+  const previousInvestedNet = previousInvested - previousWithdrawn;
 
   const centralizedCash = bankAccounts.reduce((sum, account) => sum + Number(account.balance), 0);
-  const cashLeftover = monthlyIncome - committedExpenses - monthlyInvested;
-  const previousLeftover = previousIncome - previousCommittedExpenses - previousInvested;
+  const cashLeftover = monthlyIncome - committedExpenses - monthlyInvestedNet;
+  const previousLeftover = previousIncome - previousCommittedExpenses - previousInvestedNet;
   const savingsCapacity = monthlyIncome - committedExpenses;
 
   const investmentTotal = investments
@@ -276,6 +287,7 @@ export default async function DashboardPage() {
     totalAssets,
     transactions,
     investmentContributions,
+    investmentWithdrawals,
     currentMonthStart: new Date(Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), 1)),
   });
 
@@ -285,8 +297,8 @@ export default async function DashboardPage() {
     committedExpenses,
     futureCommitments,
     centralizedCash,
-    monthlyInvested,
-    previousInvested,
+    monthlyInvested: monthlyInvestedNet,
+    previousInvested: previousInvestedNet,
     activeGoalCount: activeGoals.length,
   });
 
@@ -302,7 +314,7 @@ export default async function DashboardPage() {
         <ExecutiveCard label="Caixa atual" value={formatCurrency(centralizedCash)} icon={WalletCards} tone="slate" help="Soma atual dos saldos de todas as contas bancarias." />
         <ExecutiveCard label="Sobra do mes" value={formatCurrency(cashLeftover)} icon={PiggyBank} tone={toneFromValue(cashLeftover)} detail={deltaLabel(cashLeftover - previousLeftover)} help="Entradas menos saidas comprometidas e aportes do mes." />
         <ExecutiveCard label="Capacidade de poupanca" value={formatCurrency(savingsCapacity)} icon={ShieldCheck} tone={toneFromValue(savingsCapacity)} help="Entradas do mes menos despesas comprometidas, antes de aportes." />
-        <ExecutiveCard label="Investido no mes" value={formatCurrency(monthlyInvested)} icon={TrendingUp} tone={toneFromValue(monthlyInvested)} detail={monthlyInvested > previousInvested ? "Acima do mes anterior" : previousInvested > monthlyInvested ? "Abaixo do mes anterior" : "Estavel vs. mes anterior"} help="Aportes em investimentos que impactam o caixa neste mes." />
+        <ExecutiveCard label="Investido no mês" value={formatCurrency(monthlyInvestedNet)} icon={TrendingUp} tone={toneFromValue(monthlyInvestedNet)} detail={monthlyInvestedNet > previousInvestedNet ? "Acima do mês anterior" : previousInvestedNet > monthlyInvestedNet ? "Abaixo do mês anterior" : "Estável vs. mês anterior"} help="Aportes menos saques em investimentos que impactam o caixa neste mês." />
         <ExecutiveCard label="Patrimonio atual" value={formatCurrency(totalAssets)} icon={Landmark} tone={toneFromValue(totalAssets)} help="Caixa centralizado, investimentos e bens patrimoniais cadastrados." />
         <ExecutiveCard label="Investimentos" value={formatCurrency(investmentTotal)} icon={TrendingUp} tone={toneFromValue(investmentTotal)} help="Posicao atual dos investimentos cadastrados." />
         <ExecutiveCard label="Bens patrimoniais" value={formatCurrency(patrimonyOnly)} icon={CircleDollarSign} tone="slate" help="Imoveis, veiculos, participacoes e outros bens." />
@@ -595,11 +607,13 @@ function buildPatrimonyEvolution({
   totalAssets,
   transactions,
   investmentContributions,
+  investmentWithdrawals,
   currentMonthStart,
 }: {
   totalAssets: number;
   transactions: Awaited<ReturnType<typeof getTransactions>>;
   investmentContributions: Awaited<ReturnType<typeof getInvestmentContributions>>;
+  investmentWithdrawals: Awaited<ReturnType<typeof getInvestmentWithdrawals>>;
   currentMonthStart: Date;
 }) {
   const months = Array.from({ length: 6 }, (_, index) => addMonths(currentMonthStart, index - 5));
@@ -620,7 +634,10 @@ function buildPatrimonyEvolution({
     const invested = investmentContributions
       .filter((item) => item.impacts_cash_flow !== false && item.contribution_date >= start && item.contribution_date <= end)
       .reduce((sum, item) => sum + Number(item.amount), 0);
-    return transactionNet + invested;
+    const withdrawn = investmentWithdrawals
+      .filter((item) => item.withdrawal_date >= start && item.withdrawal_date <= end)
+      .reduce((sum, item) => sum + Number(item.amount), 0);
+    return transactionNet + invested - withdrawn;
   });
   let running = totalAssets - deltas.reduce((sum, delta) => sum + delta, 0);
   return months.map((date, index) => {

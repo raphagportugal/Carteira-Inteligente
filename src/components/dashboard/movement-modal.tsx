@@ -11,7 +11,7 @@ import {
   INCOME_CATEGORIES,
   PAYMENT_METHODS,
 } from "@/lib/finance/catalogs";
-import type { BankAccount, CreditCard, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
+import type { BankAccount, CreditCard, Investment, MonthlyBill, Transaction, TransactionType } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
 type MovementModalProps = {
@@ -20,6 +20,7 @@ type MovementModalProps = {
   cards: CreditCard[];
   accounts: BankAccount[];
   monthlyBills: MonthlyBill[];
+  investments: Investment[];
   transaction?: Transaction | null;
 };
 
@@ -29,11 +30,13 @@ export function MovementModal({
   cards,
   accounts,
   monthlyBills,
+  investments,
   transaction,
 }: MovementModalProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [type, setType] = useState<TransactionType>("income");
+  const [category, setCategory] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [linksMonthlyBill, setLinksMonthlyBill] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +45,7 @@ export function MovementModal({
   useEffect(() => {
     if (!open) return;
     setType(transaction?.type ?? "income");
+    setCategory(transaction?.category ?? "");
     setPaymentMethod(transaction?.payment_method ?? "");
     setLinksMonthlyBill(Boolean(transaction?.monthly_bill_id));
     setError("");
@@ -53,6 +57,8 @@ export function MovementModal({
     type === "expense" && paymentMethod === CREDIT_CARD_PAYMENT_METHOD;
   const today = new Date().toISOString().slice(0, 10);
   const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const createsInvestmentContribution = type === "expense" && category === "Investimentos";
+  const createsInvestmentWithdrawal = type === "income" && category === "Saque de Investimento";
 
   function close() {
     if (isPending) return;
@@ -177,7 +183,8 @@ export function MovementModal({
               <span className="mb-2 block text-sm font-semibold">Categoria <span className="font-normal text-slate-400">(opcional)</span></span>
               <select
                 name="category"
-                defaultValue={transaction?.category ?? ""}
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
                 className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"
               >
                 <option value="">Sem categoria</option>
@@ -206,6 +213,29 @@ export function MovementModal({
               </select>
             </label>
           </div>
+
+          {(createsInvestmentContribution || createsInvestmentWithdrawal) && (
+            <div className="rounded-xl bg-slate-50 p-4">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold">Investimento</span>
+                <select name="investment_id" required defaultValue="" className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm">
+                  <option value="" disabled>Selecione o investimento</option>
+                  {investments.filter((investment) => !["property", "vehicle", "business_stake", "other_asset"].includes(investment.asset_type ?? investment.type)).map((investment) => (
+                    <option key={investment.id} value={investment.id}>{investment.name}</option>
+                  ))}
+                </select>
+              </label>
+              {createsInvestmentWithdrawal && (
+                <label className="mt-3 block">
+                  <span className="mb-2 block text-sm font-semibold">Nova posição remanescente</span>
+                  <input name="resulting_position" required type="number" min="0" step="0.01" className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" />
+                </label>
+              )}
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                A Carteira Inteligente vai atualizar conta, investimento, fluxo de caixa e objetivos vinculados.
+              </p>
+            </div>
+          )}
 
           {usesCreditCard && (
             <label className="block">

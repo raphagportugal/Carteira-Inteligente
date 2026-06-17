@@ -177,6 +177,36 @@ export type InvestmentContribution = {
   amount: number;
   contribution_date: string;
   impacts_cash_flow: boolean;
+  transaction_id: string | null;
+  description: string | null;
+  created_at: string;
+};
+
+export type InvestmentWithdrawal = {
+  id: string;
+  investment_id: string;
+  bank_account_id: string;
+  user_id: string;
+  transaction_id: string | null;
+  amount: number;
+  previous_position: number;
+  resulting_position: number;
+  withdrawal_date: string;
+  allocation_snapshot: Array<{
+    goal_id: string;
+    investment_id: string;
+    allocated_amount: number;
+  }>;
+  description: string | null;
+  created_at: string;
+};
+
+export type GoalInvestmentAllocation = {
+  id: string;
+  user_id: string;
+  goal_id: string;
+  investment_id: string;
+  allocated_amount: number;
   created_at: string;
 };
 
