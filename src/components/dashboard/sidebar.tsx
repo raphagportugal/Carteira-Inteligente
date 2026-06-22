@@ -85,13 +85,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white p-5 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-slate-200/80 bg-white/95 p-6 backdrop-blur-xl lg:flex">
         {content}
       </aside>
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" onClick={onClose} aria-label="Fechar menu" />
-          <aside className="relative flex h-full w-[280px] flex-col bg-white p-5 shadow-2xl">{content}</aside>
+          <aside className="relative flex h-full w-[300px] flex-col bg-white p-6 shadow-2xl">{content}</aside>
         </div>
       )}
     </>

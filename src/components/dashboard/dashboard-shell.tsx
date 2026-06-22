@@ -51,7 +51,7 @@ export function DashboardShell({ children, name, fullName, avatar, cards, accoun
   return (
     <main className="min-h-screen bg-sand text-slate-900">
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
-      <div className="lg:pl-64">
+      <div className="lg:pl-72">
         <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
           <div className="flex h-20 items-center justify-between px-5 sm:px-8 lg:px-10">
             <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export function DashboardShell({ children, name, fullName, avatar, cards, accoun
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => { setEditingTransaction(null); setModalOpen(true); }} className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800">
+              <button onClick={() => { setEditingTransaction(null); setModalOpen(true); }} className="focus-ring inline-flex h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-bold text-white transition hover:bg-slate-800">
                 <Plus className="size-4" /><span className="hidden sm:inline">Nova movimentação</span>
               </button>
               <ProfileMenu name={fullName} avatar={avatar} />

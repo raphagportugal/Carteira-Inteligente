@@ -11,14 +11,19 @@ const config: Config = {
       colors: {
         ink: "#0F172A",
         moss: {
-          50: "#F0FDFA",
-          100: "#CCFBF1",
-          500: "#14B8A6",
-          600: "#0D9488",
-          700: "#0F766E",
-          900: "#134E4A"
+          50: "#DCFCE7",
+          100: "#BBF7D0",
+          500: "#22C55E",
+          600: "#16A34A",
+          700: "#15803D",
+          900: "#14532D"
         },
-        sand: "#F8FAFC"
+        sand: "#F8FAFC",
+        card: "#FFFFFF",
+        border: "#E2E8F0",
+        danger: "#DC2626",
+        warning: "#F59E0B",
+        muted: "#64748B"
       },
       boxShadow: {
         soft: "0 24px 70px -35px rgba(15, 23, 42, 0.22)"

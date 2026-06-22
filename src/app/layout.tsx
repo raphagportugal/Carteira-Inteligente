@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
+import { brand } from "@/config/brand";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Carteira Inteligente",
-    template: "%s | Carteira Inteligente",
+    default: brand.name,
+    template: `%s | ${brand.name}`,
   },
-  description:
-    "Seu copiloto financeiro para entender o presente e planejar o futuro.",
-  metadataBase: new URL("https://acarteirainteligente.com.br"),
+  description: brand.description,
+  metadataBase: new URL(`https://${brand.domain}`),
+  icons: {
+    icon: brand.assets.favicon,
+    shortcut: brand.assets.favicon,
+    apple: brand.assets.favicon,
+  },
 };
 
 export default function RootLayout({
@@ -18,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="font-[var(--font-inter)] antialiased">{children}</body>
+      <body className="font-[var(--font-manrope)] antialiased">{children}</body>
     </html>
   );
 }
