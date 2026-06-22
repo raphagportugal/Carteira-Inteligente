@@ -5,8 +5,17 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
-  --font-inter: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-manrope: Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-brand-green: #22c55e;
+  --color-brand-green-dark: #16a34a;
+  --color-brand-green-soft: #dcfce7;
+  --color-brand-navy: #0f172a;
+  --color-brand-text: #64748b;
+  --color-brand-bg: #f8fafc;
+  --color-brand-card: #ffffff;
+  --color-brand-border: #e2e8f0;
+  --color-brand-error: #dc2626;
+  --color-brand-warning: #f59e0b;
+  --font-manrope: Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -38,6 +47,10 @@ body {
   }
 
   .dashboard-card {
-    @apply rounded-2xl border border-slate-200/70 bg-white shadow-sm;
+    @apply rounded-3xl border border-slate-200/80 bg-white shadow-[0_22px_60px_-42px_rgba(15,23,42,0.35)];
+  }
+
+  .brand-label {
+    @apply text-[10px] font-extrabold uppercase tracking-[0.22em] text-moss-600;
   }
 }

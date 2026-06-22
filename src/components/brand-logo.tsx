@@ -1,27 +1,28 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ChartNoAxesCombined } from "lucide-react";
+import { brand } from "@/config/brand";
 
 type BrandLogoProps = {
   compact?: boolean;
   href?: string;
+  className?: string;
 };
 
-export function BrandLogo({ compact = false, href = "/" }: BrandLogoProps) {
+export function BrandLogo({ compact = false, href = "/", className }: BrandLogoProps) {
   return (
     <Link
       href={href}
-      className="focus-ring inline-flex items-center gap-3 rounded-lg"
-      aria-label="Carteira Inteligente"
+      className="focus-ring inline-flex items-center rounded-xl"
+      aria-label={brand.name}
     >
-      <span className="grid size-10 place-items-center rounded-xl bg-slate-900 text-white shadow-sm">
-        <ChartNoAxesCombined className="size-5 text-moss-500" strokeWidth={2} />
-      </span>
-      {!compact && (
-        <span className="font-[var(--font-manrope)] text-sm font-extrabold uppercase leading-tight tracking-[0.04em]">
-          Carteira
-          <br /><span className="text-moss-600">Inteligente</span>
-        </span>
-      )}
+      <Image
+        src={compact ? brand.assets.logo : brand.assets.logoHorizontal}
+        alt={brand.name}
+        width={compact ? 52 : 260}
+        height={compact ? 52 : 68}
+        priority
+        className={className ?? (compact ? "h-12 w-12" : "h-12 w-auto sm:h-14 lg:h-16")}
+      />
     </Link>
   );
 }

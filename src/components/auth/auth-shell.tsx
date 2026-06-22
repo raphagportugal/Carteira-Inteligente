@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { brand } from "@/config/brand";
 
 type AuthShellProps = {
   children: React.ReactNode;
@@ -26,7 +27,7 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
 
         <div className="relative z-10 my-auto max-w-xl">
           <p className="mb-5 text-xs font-bold uppercase tracking-[0.24em] text-moss-100">
-            Seu copiloto financeiro
+            {brand.tagline}
           </p>
           <h2 className="font-[var(--font-manrope)] text-5xl font-extrabold leading-[1.1] tracking-[-0.045em]">
             Entenda hoje. Planeje amanhã. Decida melhor.

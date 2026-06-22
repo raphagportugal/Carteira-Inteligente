@@ -25,7 +25,7 @@ export function AuthForm({ mode, action, message, error }: AuthFormProps) {
               autoComplete="name"
               required
               minLength={2}
-              placeholder="Como podemos te chamar??"
+              placeholder="Como podemos te chamar?"
               className="focus-ring h-12 w-full rounded-xl border border-stone-200 bg-white pl-12 pr-4 text-sm placeholder:text-stone-400"
             />
           </span>
@@ -84,7 +84,7 @@ export function AuthForm({ mode, action, message, error }: AuthFormProps) {
       />
 
       <p className="text-center text-sm text-stone-500">
-        {isLogin ?"Ainda não tem uma conta?" : "Já tem uma conta??"}{" "}
+        {isLogin ?"Ainda não tem uma conta?" : "Já tem uma conta?"}{" "}
         <Link
           href={isLogin ?"/cadastro" : "/login"}
           className="focus-ring rounded font-bold text-moss-700 hover:text-moss-900"

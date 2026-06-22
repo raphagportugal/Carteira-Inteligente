@@ -57,8 +57,8 @@ const capabilities = [
 export default function Home() {
   return (
     <main className="overflow-hidden bg-sand text-slate-900">
-      <header className="container-page relative z-20 flex h-24 items-center justify-between">
-        <BrandLogo />
+      <header className="container-page relative z-20 flex h-32 items-center justify-between">
+        <BrandLogo className="h-16 w-auto sm:h-[4.25rem] lg:h-[4.6rem]" />
         <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-500 md:flex">
           <Link href="#produto" className="focus-ring rounded hover:text-slate-900">
             Produto
@@ -71,10 +71,10 @@ export default function Home() {
           </Link>
         </nav>
         <div className="flex items-center gap-3">
-          <Link href="/login" className="focus-ring hidden rounded-lg px-3 py-2 text-sm font-bold hover:text-moss-600 sm:block">
+          <Link href="/login" className="focus-ring inline-flex h-11 items-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-900 transition hover:border-slate-300 hover:text-moss-600 sm:h-auto sm:border-0 sm:bg-transparent sm:px-3 sm:py-2">
             Entrar
           </Link>
-          <Link href="/cadastro" className="focus-ring inline-flex h-11 items-center rounded-xl bg-slate-900 px-5 text-sm font-bold text-white transition hover:bg-slate-800">
+          <Link href="/cadastro" className="focus-ring hidden h-11 items-center rounded-xl bg-slate-900 px-5 text-sm font-bold text-white transition hover:bg-slate-800 sm:inline-flex">
             Criar conta grátis
           </Link>
         </div>
@@ -97,7 +97,7 @@ export default function Home() {
               único lugar. Descubra quanto você realmente pode gastar, investir
               e planejar para o futuro.
             </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-9 hidden flex-col gap-3 sm:flex sm:flex-row">
               <Link href="/cadastro" className="focus-ring inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-slate-900 px-7 text-sm font-bold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800">
                 Criar conta grátis <ArrowRight className="size-4" />
               </Link>
@@ -224,8 +224,8 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="container-page flex flex-col gap-5 border-t border-slate-200 py-9 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <BrandLogo />
+      <footer className="container-page flex flex-col items-center gap-5 border-t border-slate-200 py-11 text-center text-xs text-slate-500 sm:flex-row sm:justify-between sm:text-left">
+        <BrandLogo className="h-16 w-auto sm:h-[4.25rem] lg:h-[4.6rem]" />
         <p>© 2026 Carteira Inteligente · acarteirainteligente.com.br</p>
       </footer>
     </main>
