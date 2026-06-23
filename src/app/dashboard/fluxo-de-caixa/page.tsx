@@ -93,7 +93,19 @@ export default async function CashFlowPage() {
 
   return <>
     <PageHeading eyebrow="Caixa e planejamento" title="Contas e Fluxo de Caixa" description="Centralize seus saldos e acompanhe entradas, saídas, aportes e sobra mensal." />
-    <BankAccountsManager accounts={accounts} transfers={transfers} />
+    <details className="dashboard-card mb-6 p-5 sm:p-6">
+      <summary className="flex cursor-pointer list-none flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-moss-600">Contas bancárias</p>
+          <h2 className="mt-1 text-xl font-extrabold">Gerenciar contas</h2>
+          <p className="mt-1 text-sm text-slate-500">Abra para adicionar, editar contas e registrar transferências.</p>
+        </div>
+        <span className="inline-flex h-10 items-center justify-center rounded-xl bg-slate-950 px-4 text-sm font-bold text-white">Gerenciar contas</span>
+      </summary>
+      <div className="mt-6 border-t border-slate-100 pt-6">
+        <BankAccountsManager accounts={accounts} transfers={transfers} />
+      </div>
+    </details>
     {!hasData ? (
       <EmptyState icon={CalendarRange} title="Seu fluxo ainda não tem dados" description="Cadastre movimentações ou compromissos para construir sua projeção." action={<NewMovementButton />} />
     ) : (

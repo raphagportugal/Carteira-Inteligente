@@ -49,8 +49,8 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
 
       <section className="flex min-h-screen items-center justify-center bg-sand px-5 py-12 sm:px-10">
         <div className="w-full max-w-md">
-          <div className="mb-10 flex items-center justify-between lg:hidden">
-            <BrandLogo />
+          <div className="mb-10 flex items-center justify-center lg:hidden">
+            <BrandLogo className="h-[4.5rem] w-auto sm:h-20" />
           </div>
           <Link
             href="/"

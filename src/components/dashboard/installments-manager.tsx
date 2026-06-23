@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CreditCard, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -81,6 +81,18 @@ export function InstallmentsManager({
     setError("");
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("novo") === "parcelamento" && cards.length > 0) {
+      setEditing(null);
+      setError("");
+      setModalOpen(true);
+      params.delete("novo");
+      const query = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${query ?`?${query}` : ""}`);
+    }
+  }, [cards.length]);
+
   function submit(formData: FormData) {
     setError("");
     startTransition(async () => {
@@ -114,7 +126,7 @@ export function InstallmentsManager({
 
   return (
     <>
-      <div className="mb-6 flex justify-end">
+      <div className="mb-6 flex justify-start">
         {cards.length > 0 ? (
           <button onClick={openCreate} className="focus-ring inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800">
             <Plus className="size-4" /> Novo parcelamento

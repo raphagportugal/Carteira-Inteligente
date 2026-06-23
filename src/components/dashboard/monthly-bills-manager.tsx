@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Pencil, Plus, Trash2, X } from "lucide-react";
 import { createMonthlyBill, deleteMonthlyBill, updateMonthlyBill } from "@/app/dashboard/actions";
@@ -63,6 +63,19 @@ export function MonthlyBillsManager({
     setEditing(null);
     setError("");
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("novo") === "mensalidade") {
+      setEditing(null);
+      setTarget("account");
+      setError("");
+      setOpen(true);
+      params.delete("novo");
+      const query = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${query ?`?${query}` : ""}`);
+    }
+  }, []);
 
   function submit(formData: FormData) {
     if (target === "account") formData.set("credit_card_id", "");

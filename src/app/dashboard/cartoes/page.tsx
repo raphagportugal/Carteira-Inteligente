@@ -22,7 +22,19 @@ export default async function CardsAndInstallmentsPage() {
   return <>
     <PageHeading eyebrow="Meios de pagamento" title="Cartões e Parcelamentos" description="Gerencie cartões, compras parceladas e a próxima fatura em um único lugar." />
     <section className="dashboard-card mb-8 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Resumo da próxima fatura</p><div className="mt-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p className="text-2xl font-extrabold">{formatCurrency(nextInvoice)}</p><p className="mt-1 text-xs text-slate-400">{nextDueDate ?`Vencimentos em ${new Date(`${nextDueDate}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}` : "Nenhum vencimento futuro"}</p></div><p className="text-xs text-slate-500">{nextDates.filter((item) => item.date === nextDueDate).length} lançamentos previstos</p></div></section>
-    <section><div className="mb-4"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Meus cartões</p><h2 className="mt-1 text-xl font-extrabold">Cartões cadastrados</h2></div><CreditCardsManager cards={cards} /></section>
-    <section className="mt-12 border-t border-slate-200 pt-8"><div className="mb-4"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Parcelamentos</p><h2 className="mt-1 text-xl font-extrabold">Compras parceladas</h2></div><InstallmentsManager installments={installments} cards={cards} /></section>
+    <details className="dashboard-card mt-8 p-5 sm:p-6">
+      <summary className="flex cursor-pointer list-none flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-moss-600">Meus cartões</p>
+          <h2 className="mt-1 text-xl font-extrabold">Gerenciar cartões</h2>
+          <p className="mt-1 text-sm text-slate-500">Abra para adicionar, editar e consultar seus cartões cadastrados.</p>
+        </div>
+        <span className="inline-flex h-10 items-center justify-center rounded-xl bg-slate-950 px-4 text-sm font-bold text-white">Gerenciar cartões</span>
+      </summary>
+      <div className="mt-6 border-t border-slate-100 pt-6">
+        <CreditCardsManager cards={cards} />
+      </div>
+    </details>
+    <section className="mt-8"><div className="mb-4"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Parcelamentos</p><h2 className="mt-1 text-xl font-extrabold">Compras parceladas</h2></div><InstallmentsManager installments={installments} cards={cards} /></section>
   </>;
 }
