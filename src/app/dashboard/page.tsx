@@ -571,13 +571,15 @@ function RecentTransactionsPanel({
   cardsById: Map<string, Awaited<ReturnType<typeof getCreditCards>>[number]>;
 }) {
   return (
-    <article className="dashboard-card p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+    <article className="dashboard-card min-w-0 p-5 sm:p-6">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Histórico</p>
           <h2 className="mt-1 text-lg font-extrabold">Movimentações recentes</h2>
         </div>
-        <NewMovementButton compact />
+        <div className="flex justify-start sm:justify-end">
+          <NewMovementButton compact />
+        </div>
       </div>
       <div className="mt-5 divide-y divide-slate-100">
         {transactions.map((transaction) => {
@@ -586,7 +588,7 @@ function RecentTransactionsPanel({
           const impactDate = getTransactionCashFlowDate(transaction);
           return (
             <details key={transaction.id} className="group py-3">
-              <summary className="flex cursor-pointer list-none items-center gap-3">
+              <summary className="flex min-w-0 cursor-pointer list-none items-center gap-3">
                 <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${income ?"bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
                   <CategoryIcon category={transaction.category} />
                 </span>
@@ -594,17 +596,17 @@ function RecentTransactionsPanel({
                   <p className="truncate text-sm font-bold">{transaction.description}</p>
                   <p className="text-xs text-slate-400">{dateFormatter.format(parseDate(transaction.transaction_date))}</p>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className={`text-sm font-extrabold ${income ?"text-emerald-600" : "text-slate-900"}`}>{income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}</p>
+                <div className="min-w-0 shrink-0 text-right">
+                  <p className={`max-w-[8rem] truncate text-sm font-extrabold sm:max-w-none ${income ?"text-emerald-600" : "text-slate-900"}`}>{income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}</p>
                   <p className="mt-1 text-[10px] font-bold text-moss-700 group-open:hidden">Ver detalhes</p>
                   <p className="mt-1 hidden text-[10px] font-bold text-slate-400 group-open:block">Ocultar</p>
                 </div>
               </summary>
-              <div className="ml-[52px] mt-3 rounded-2xl bg-slate-50 p-4 text-xs text-slate-500">
+              <div className="mt-3 rounded-2xl bg-slate-50 p-4 text-xs text-slate-500 sm:ml-[52px]">
                 <p className="break-words"><strong className="text-slate-700">Categoria:</strong> {transaction.category}</p>
                 {card && <p className="mt-1 break-words"><strong className="text-slate-700">Cartão:</strong> {card.name} final {card.last_four_digits}</p>}
                 <p className="mt-1 break-words"><strong className="text-slate-700">Impacto no fluxo:</strong> {dateFormatter.format(parseDate(impactDate))}</p>
-                <div className="mt-3">
+                <div className="mt-3 flex min-w-0">
                   <TransactionActions transaction={transaction} />
                 </div>
               </div>

@@ -64,13 +64,13 @@ export function CategoriesBreakdown({
             <div className="mt-5 space-y-3">
               {categories.map(([category, amount], index) => (
                 <div key={category} className="rounded-2xl bg-slate-50 p-4">
-                  <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start">
                     <span className="mt-1 size-2.5 shrink-0 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
                     <div className="min-w-0 flex-1">
                       <p className="break-words text-sm font-bold text-slate-700">{category}</p>
                       <p className="mt-1 text-xs text-slate-500">{formatPercent(amount / total)} das saídas categorizadas</p>
                     </div>
-                    <strong className="shrink-0 text-sm text-slate-950">{formatCurrency(amount)}</strong>
+                    <strong className="text-sm text-slate-950 sm:shrink-0">{formatCurrency(amount)}</strong>
                   </div>
                 </div>
               ))}
