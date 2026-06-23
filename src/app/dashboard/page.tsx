@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CategoriesBreakdown } from "@/components/dashboard/categories-breakdown";
 import { NewMovementButton } from "@/components/dashboard/new-movement-button";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { TransactionActions } from "@/components/dashboard/transaction-actions";
@@ -32,6 +33,10 @@ import { projectedMonthlyBillAmountInRange } from "@/lib/finance/monthly-bills";
 import { getTransactionCashFlowDate } from "@/lib/finance/transaction-cash-flow";
 import { getInvestmentPosition } from "@/lib/finance/investment-position";
 import {
+  buildEffectiveAllocationAmounts,
+  getGoalEffectiveCurrentAmount,
+} from "@/lib/finance/goal-allocations";
+import {
   financingAmountInMonth,
   getFinancingRemainingMonths,
 } from "@/lib/finance/financing";
@@ -40,6 +45,7 @@ import {
   getCreditCards,
   getFinancingCustomPayments,
   getFinancings,
+  getGoalInvestmentAllocations,
   getGoals,
   getInstallments,
   getInvestments,
@@ -67,6 +73,7 @@ export default async function DashboardPage() {
     bankAccounts,
     investmentContributions,
     investmentWithdrawals,
+    goalAllocations,
     recentTransactions,
   ] = await Promise.all([
     getTransactions(),
@@ -80,6 +87,7 @@ export default async function DashboardPage() {
     getBankAccounts(),
     getInvestmentContributions(),
     getInvestmentWithdrawals(),
+    getGoalInvestmentAllocations(),
     getTransactions({ limit: 5 }),
   ]);
 
@@ -230,7 +238,7 @@ export default async function DashboardPage() {
   const totalAssets = centralizedCash + registeredPatrimony;
 
   const activeGoals = goals
-    .filter((goal) => goal.status === "active")
+    .filter((goal) => goal.status !== "completed")
     .sort(
       (a, b) =>
         priorityWeight[b.priority] - priorityWeight[a.priority] ||
@@ -301,6 +309,11 @@ export default async function DashboardPage() {
     previousInvested: previousInvestedNet,
     activeGoalCount: activeGoals.length,
   });
+  const effectiveAllocationAmounts = buildEffectiveAllocationAmounts(
+    goalAllocations,
+    investments,
+    investmentContributions,
+  );
 
   return (
     <>
@@ -351,7 +364,11 @@ export default async function DashboardPage() {
           </div>
         </article>
 
-        <GoalsPanel goals={activeGoals} />
+        <GoalsPanel
+          goals={activeGoals}
+          allocations={goalAllocations}
+          effectiveAllocationAmounts={effectiveAllocationAmounts}
+        />
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_.85fr]">
@@ -399,28 +416,34 @@ function ExecutiveCard({
 }
 
 function PatrimonyEvolutionChart({ evolution }: { evolution: Array<{ date: Date; value: number; delta: number }> }) {
-  const max = Math.max(...evolution.map((item) => Math.abs(item.value)), 1);
+  const values = evolution.map((item) => item.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(max - min, Math.abs(max) * 0.02, 1);
   return (
-    <article className="dashboard-card p-5 sm:p-6">
+    <article className="dashboard-card max-w-full overflow-hidden p-5 sm:p-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-moss-600">Evolução patrimonial</p>
         <h2 className="mt-1 text-lg font-extrabold">Patrimônio liquido simplificado</h2>
         <p className="mt-1 text-xs text-slate-400">Janela movel dos ultimos 6 mêses, usando caixa, investimentos e bens cadastrados.</p>
       </div>
-      <div className="mt-6 flex h-56 items-end gap-3 border-b border-slate-100 pb-2">
+      <div className="mt-6 overflow-x-auto pb-2">
+        <div className="flex h-56 min-w-[30rem] items-end gap-3 border-b border-slate-100 pb-2 sm:min-w-0">
         {evolution.map((item) => {
           const positive = item.value > 0;
           const negative = item.value < 0;
           const barColor = positive ?"bg-moss-500" : negative ?"bg-rose-400" : "bg-slate-300";
           const valueColor = positive ?"text-emerald-700" : negative ?"text-red-600" : "text-slate-500";
+          const height = max === min ?62 : 18 + ((item.value - min) / range) * 82;
           return (
             <div key={item.date.toISOString()} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
               <p className={`text-center text-[10px] font-extrabold leading-tight sm:text-xs ${valueColor}`}>{compactCurrencyFormatter.format(item.value)}</p>
-              <div className={`min-h-2 rounded-t-xl shadow-sm ${barColor}`} style={{ height: `${Math.max(8, Math.abs(item.value) / max * 100)}%` }} />
+              <div className={`min-h-4 rounded-t-xl shadow-sm ${barColor}`} style={{ height: `${Math.min(100, Math.max(12, height))}%` }} />
               <p className="text-center text-[10px] capitalize text-slate-400">{item.date.toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })}</p>
             </div>
           );
         })}
+        </div>
       </div>
     </article>
   );
@@ -433,17 +456,17 @@ function ExecutiveInsights({ insights }: { insights: Array<{ title: string; tone
     red: "bg-red-50 text-red-700",
   };
   return (
-    <article className="dashboard-card p-5 sm:p-6">
-      <div className="flex items-center gap-3">
+    <article className="dashboard-card min-w-0 p-5 sm:p-6">
+      <div className="flex min-w-0 items-center gap-3">
         <span className="grid size-10 place-items-center rounded-xl bg-moss-100 text-moss-700"><BrainCircuit className="size-5" /></span>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Leituras automáticas</p>
           <h2 className="text-lg font-extrabold">Saúde financeira</h2>
         </div>
       </div>
       <div className="mt-5 space-y-3">
         {insights.map((insight) => (
-          <div key={insight.title} className={`rounded-2xl p-4 text-sm font-semibold leading-6 ${colors[insight.tone]}`}>
+          <div key={insight.title} className={`overflow-hidden break-words rounded-2xl p-4 text-sm font-semibold leading-6 ${colors[insight.tone]}`}>
             {insight.title}
           </div>
         ))}
@@ -462,11 +485,19 @@ function CommitmentCard({ href, label, value, detail }: { href: string; label: s
   );
 }
 
-function GoalsPanel({ goals }: { goals: Awaited<ReturnType<typeof getGoals>> }) {
+function GoalsPanel({
+  goals,
+  allocations,
+  effectiveAllocationAmounts,
+}: {
+  goals: Awaited<ReturnType<typeof getGoals>>;
+  allocations: Awaited<ReturnType<typeof getGoalInvestmentAllocations>>;
+  effectiveAllocationAmounts: Map<string, number>;
+}) {
   return (
-    <article className="dashboard-card p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+    <article className="dashboard-card min-w-0 p-5 sm:p-6">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Objetivos</p>
           <h2 className="mt-1 text-lg font-extrabold">Em andamento</h2>
         </div>
@@ -475,13 +506,21 @@ function GoalsPanel({ goals }: { goals: Awaited<ReturnType<typeof getGoals>> }) 
       {goals.length > 0 ? (
         <div className="mt-5 space-y-3">
           {goals.slice(0, 3).map((goal) => {
-            const progress = goalPercent(goal.current_amount, goal.target_amount);
+            const currentAmount = getGoalEffectiveCurrentAmount(
+              goal,
+              allocations,
+              effectiveAllocationAmounts,
+            );
+            const targetAmount = Number(goal.target_amount);
+            const missingAmount = Math.max(0, targetAmount - currentAmount);
+            const progress = goalPercent(currentAmount, targetAmount);
             return (
               <div key={goal.id} className="rounded-2xl bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <p className="font-bold">{goal.name}</p>
-                    <p className="mt-1 text-xs text-slate-500">{formatCurrency(Number(goal.current_amount))} de {formatCurrency(Number(goal.target_amount))}</p>
+                    <p className="mt-1 text-xs text-slate-500">{formatCurrency(currentAmount)} de {formatCurrency(targetAmount)}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-400">Faltam {formatCurrency(missingAmount)}</p>
                   </div>
                   <span className="rounded-full bg-white px-2.5 py-1 text-xs font-extrabold text-moss-700">{progress}%</span>
                 </div>
@@ -494,7 +533,10 @@ function GoalsPanel({ goals }: { goals: Awaited<ReturnType<typeof getGoals>> }) 
         </div>
       ) : (
         <div className="mt-5 rounded-2xl bg-slate-50 p-6 text-center text-sm text-slate-500">
-          Nenhum objetivo ativo no momento.
+          <p>Nenhum objetivo cadastrado ou em andamento.</p>
+          <Link href="/dashboard/objetivos" className="mt-3 inline-flex rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white">
+            Criar objetivo
+          </Link>
         </div>
       )}
     </article>
@@ -504,31 +546,16 @@ function GoalsPanel({ goals }: { goals: Awaited<ReturnType<typeof getGoals>> }) 
 function CategoriesPanel({ categories, monthlyExpenses, monthlyRecurringBills }: { categories: Array<[string, number]>; monthlyExpenses: number; monthlyRecurringBills: number }) {
   const categorizedExpenses = Math.max(monthlyExpenses + monthlyRecurringBills, 1);
   return (
-    <article className="dashboard-card p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+    <article className="dashboard-card min-w-0 p-5 sm:p-6">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-moss-600">Este mês</p>
           <h2 className="mt-1 text-lg font-extrabold">Top categorias de saída</h2>
         </div>
         <Link href="/dashboard/movimentacoes" className="hidden items-center gap-1 text-xs font-bold text-moss-700 sm:inline-flex">Histórico <ArrowRight className="size-4" /></Link>
       </div>
       {categories.length > 0 ? (
-        <div className="mt-6 space-y-5">
-          {categories.slice(0, 5).map(([category, amount], index) => {
-            const percentage = amount / categorizedExpenses * 100;
-            return (
-              <div key={category}>
-                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                  <span className="flex min-w-0 items-center gap-2 font-semibold text-slate-600"><CategoryIcon category={category} /> <span className="truncate">{category}</span></span>
-                  <span className="shrink-0 font-extrabold">{formatCurrency(amount)}</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                  <div className={index === 0 ?"h-full rounded-full bg-moss-500" : "h-full rounded-full bg-slate-400"} style={{ width: `${Math.max(4, percentage)}%` }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <CategoriesBreakdown categories={categories} total={categorizedExpenses} monthlyExpenses={monthlyExpenses} />
       ) : (
         <div className="mt-6 rounded-2xl bg-slate-50 p-6 text-center text-sm text-slate-500">Nenhuma saída registrada neste mês.</div>
       )}
@@ -558,18 +585,30 @@ function RecentTransactionsPanel({
           const card = transaction.credit_card_id ?cardsById.get(transaction.credit_card_id) : undefined;
           const impactDate = getTransactionCashFlowDate(transaction);
           return (
-            <div key={transaction.id} className="flex items-center gap-3 py-3">
-              <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${income ?"bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
-                <CategoryIcon category={transaction.category} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold">{transaction.description}</p>
-                <p className="text-xs text-slate-400">{transaction.category}{card ?` - ${card.name} final ${card.last_four_digits}` : ""}</p>
-                <p className="mt-0.5 text-xs text-slate-400">{card ?`Compra em ${dateFormatter.format(parseDate(transaction.transaction_date))} - Impacta em ${dateFormatter.format(parseDate(impactDate))}` : dateFormatter.format(parseDate(transaction.transaction_date))}</p>
+            <details key={transaction.id} className="group py-3">
+              <summary className="flex cursor-pointer list-none items-center gap-3">
+                <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${income ?"bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"}`}>
+                  <CategoryIcon category={transaction.category} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold">{transaction.description}</p>
+                  <p className="text-xs text-slate-400">{dateFormatter.format(parseDate(transaction.transaction_date))}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className={`text-sm font-extrabold ${income ?"text-emerald-600" : "text-slate-900"}`}>{income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}</p>
+                  <p className="mt-1 text-[10px] font-bold text-moss-700 group-open:hidden">Ver detalhes</p>
+                  <p className="mt-1 hidden text-[10px] font-bold text-slate-400 group-open:block">Ocultar</p>
+                </div>
+              </summary>
+              <div className="ml-[52px] mt-3 rounded-2xl bg-slate-50 p-4 text-xs text-slate-500">
+                <p className="break-words"><strong className="text-slate-700">Categoria:</strong> {transaction.category}</p>
+                {card && <p className="mt-1 break-words"><strong className="text-slate-700">Cartão:</strong> {card.name} final {card.last_four_digits}</p>}
+                <p className="mt-1 break-words"><strong className="text-slate-700">Impacto no fluxo:</strong> {dateFormatter.format(parseDate(impactDate))}</p>
+                <div className="mt-3">
+                  <TransactionActions transaction={transaction} />
+                </div>
               </div>
-              <p className={`shrink-0 text-sm font-extrabold ${income ?"text-emerald-600" : "text-slate-900"}`}>{income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}</p>
-              <TransactionActions transaction={transaction} />
-            </div>
+            </details>
           );
         })}
       </div>

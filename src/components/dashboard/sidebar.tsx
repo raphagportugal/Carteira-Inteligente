@@ -40,7 +40,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const content = (
     <>
       <div className="flex items-center justify-between">
-        <BrandLogo href="/dashboard" />
+        <BrandLogo href="/dashboard" className="h-[3.45rem] w-auto sm:h-14 lg:h-16" />
         <button onClick={onClose} className="focus-ring grid size-9 place-items-center rounded-lg text-slate-400 lg:hidden" aria-label="Fechar menu">
           <X className="size-5" />
         </button>
