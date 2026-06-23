@@ -622,3 +622,134 @@ alter table public.monthly_bills
 
 create index if not exists transactions_monthly_bill_idx
   on public.transactions (monthly_bill_id);
+
+-- Hardening SaaS: impede vínculos cruzados entre usuários em tabelas relacionadas.
+create unique index if not exists monthly_bills_id_user_unique_idx
+  on public.monthly_bills (id, user_id);
+create unique index if not exists bank_accounts_id_user_unique_idx
+  on public.bank_accounts (id, user_id);
+create unique index if not exists investments_id_user_unique_idx
+  on public.investments (id, user_id);
+create unique index if not exists goals_id_user_unique_idx
+  on public.goals (id, user_id);
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'transactions_bank_account_same_user') then
+    alter table public.transactions
+      add constraint transactions_bank_account_same_user
+      foreign key (bank_account_id, user_id)
+      references public.bank_accounts (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'monthly_bills_bank_account_same_user') then
+    alter table public.monthly_bills
+      add constraint monthly_bills_bank_account_same_user
+      foreign key (bank_account_id, user_id)
+      references public.bank_accounts (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'monthly_bills_credit_card_same_user') then
+    alter table public.monthly_bills
+      add constraint monthly_bills_credit_card_same_user
+      foreign key (credit_card_id, user_id)
+      references public.credit_cards (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'account_transfers_source_same_user') then
+    alter table public.account_transfers
+      add constraint account_transfers_source_same_user
+      foreign key (source_account_id, user_id)
+      references public.bank_accounts (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'account_transfers_destination_same_user') then
+    alter table public.account_transfers
+      add constraint account_transfers_destination_same_user
+      foreign key (destination_account_id, user_id)
+      references public.bank_accounts (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'financing_payment_statuses_same_user') then
+    alter table public.financing_payment_statuses
+      add constraint financing_payment_statuses_same_user
+      foreign key (financing_id, user_id)
+      references public.financings (id, user_id)
+      on delete cascade
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'investment_contributions_investment_same_user') then
+    alter table public.investment_contributions
+      add constraint investment_contributions_investment_same_user
+      foreign key (investment_id, user_id)
+      references public.investments (id, user_id)
+      on delete cascade
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'investment_contributions_bank_account_same_user') then
+    alter table public.investment_contributions
+      add constraint investment_contributions_bank_account_same_user
+      foreign key (bank_account_id, user_id)
+      references public.bank_accounts (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'investment_valuations_investment_same_user') then
+    alter table public.investment_valuations
+      add constraint investment_valuations_investment_same_user
+      foreign key (investment_id, user_id)
+      references public.investments (id, user_id)
+      on delete cascade
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'investment_withdrawals_investment_same_user') then
+    alter table public.investment_withdrawals
+      add constraint investment_withdrawals_investment_same_user
+      foreign key (investment_id, user_id)
+      references public.investments (id, user_id)
+      on delete cascade
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'investment_withdrawals_bank_account_same_user') then
+    alter table public.investment_withdrawals
+      add constraint investment_withdrawals_bank_account_same_user
+      foreign key (bank_account_id, user_id)
+      references public.bank_accounts (id, user_id)
+      on delete restrict
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'goal_investment_allocations_goal_same_user') then
+    alter table public.goal_investment_allocations
+      add constraint goal_investment_allocations_goal_same_user
+      foreign key (goal_id, user_id)
+      references public.goals (id, user_id)
+      on delete cascade
+      not valid;
+  end if;
+
+  if not exists (select 1 from pg_constraint where conname = 'goal_investment_allocations_investment_same_user') then
+    alter table public.goal_investment_allocations
+      add constraint goal_investment_allocations_investment_same_user
+      foreign key (investment_id, user_id)
+      references public.investments (id, user_id)
+      on delete cascade
+      not valid;
+  end if;
+end
+$$;

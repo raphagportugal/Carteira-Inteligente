@@ -653,14 +653,14 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
       transactionBalanceEffect(payload),
     ))
   ) {
-    await supabase.from("transactions").delete().eq("id", transaction.id);
+    await supabase.from("transactions").delete().eq("id", transaction.id).eq("user_id", user.id);
     return databaseError("Unable to update account balance after transaction.");
   }
   if (payload.category === INVESTMENT_CONTRIBUTION_CATEGORY && payload.type === "expense") {
     const investmentId = requiredText(formData, "investment_id");
     if (!investmentId || !payload.bank_account_id) {
       if (payload.bank_account_id) await adjustAccountBalance(supabase, user.id, payload.bank_account_id, -transactionBalanceEffect(payload));
-      await supabase.from("transactions").delete().eq("id", transaction.id);
+      await supabase.from("transactions").delete().eq("id", transaction.id).eq("user_id", user.id);
       return { success: false, message: "Selecione o investimento relacionado ao aporte." };
     }
     const result = await createInvestmentContributionEvent({
@@ -676,7 +676,7 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
     });
     if (!result.success) {
       await adjustAccountBalance(supabase, user.id, payload.bank_account_id, -transactionBalanceEffect(payload));
-      await supabase.from("transactions").delete().eq("id", transaction.id);
+      await supabase.from("transactions").delete().eq("id", transaction.id).eq("user_id", user.id);
       return result;
     }
   }
@@ -685,7 +685,7 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
     const resultingPosition = nonNegativeNumber(formData, "resulting_position");
     if (!investmentId || resultingPosition === null || !payload.bank_account_id) {
       if (payload.bank_account_id) await adjustAccountBalance(supabase, user.id, payload.bank_account_id, -transactionBalanceEffect(payload));
-      await supabase.from("transactions").delete().eq("id", transaction.id);
+      await supabase.from("transactions").delete().eq("id", transaction.id).eq("user_id", user.id);
       return { success: false, message: "Informe o investimento e a nova posi??o ap?s o saque." };
     }
     const result = await createInvestmentWithdrawalEvent({
@@ -702,7 +702,7 @@ export async function createTransaction(formData: FormData): Promise<ActionResul
     });
     if (!result.success) {
       await adjustAccountBalance(supabase, user.id, payload.bank_account_id, -transactionBalanceEffect(payload));
-      await supabase.from("transactions").delete().eq("id", transaction.id);
+      await supabase.from("transactions").delete().eq("id", transaction.id).eq("user_id", user.id);
       return result;
     }
   }
