@@ -6,17 +6,29 @@ type BrandLogoProps = {
   compact?: boolean;
   href?: string;
   className?: string;
+  variant?: "default" | "white";
 };
 
-export function BrandLogo({ compact = false, href = "/", className }: BrandLogoProps) {
+export function BrandLogo({
+  compact = false,
+  href = "/",
+  className,
+  variant = "default",
+}: BrandLogoProps) {
+  const logoSrc = compact
+    ? brand.assets.logo
+    : variant === "white"
+      ? brand.assets.logoHorizontalWhite
+      : brand.assets.logoHorizontal;
+
   return (
     <Link
       href={href}
-      className="focus-ring inline-flex items-center rounded-xl"
+      className="inline-flex items-center bg-transparent p-0"
       aria-label={brand.name}
     >
       <Image
-        src={compact ? brand.assets.logo : brand.assets.logoHorizontal}
+        src={logoSrc}
         alt={brand.name}
         width={compact ? 52 : 260}
         height={compact ? 52 : 68}

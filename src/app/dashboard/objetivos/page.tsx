@@ -4,7 +4,7 @@ import { GoalsManager } from "@/components/dashboard/goals-manager";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { getFinancialPlans, getGoalInvestmentAllocations, getGoals, getInvestmentContributions, getInvestments } from "@/lib/finance/queries";
 
-export const metadata: Metadata = { title: "Objetivos e Planejamento Fin." };
+export const metadata: Metadata = { title: "Objetivos e Planejamento Financeiro" };
 
 export default async function GoalsPage() {
   const [goals, plans, investments, contributions, allocations] = await Promise.all([
@@ -18,8 +18,8 @@ export default async function GoalsPage() {
     <>
       <PageHeading
         eyebrow="Planos que ganham forma"
-        title="Objetivos e Planejamento Fin."
-        description="Priorize metas, acompanhe progresso financeiro e defina limites mensais por categoria em uma ??nica vis??o."
+        title="Objetivos e Planejamento Financeiro"
+        description="Priorize metas, acompanhe progresso financeiro e defina limites mensais por categoria em uma única visão."
       />
       <section className="space-y-10">
         <div>

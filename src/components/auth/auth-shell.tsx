@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { legalLinks } from "@/components/public/legal-page";
 import { brand } from "@/config/brand";
 
 type AuthShellProps = {
@@ -11,7 +12,7 @@ type AuthShellProps = {
 
 const highlights = [
   "Entenda quanto você realmente tem disponível",
-  "Antecipe seu fluxo de caixa dos próximos mêses",
+  "Antecipe seu fluxo de caixa dos próximos meses",
   "Receba recomendações para decidir com segurança",
 ];
 
@@ -22,7 +23,7 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
         <div className="absolute inset-0 bg-soft-grid bg-[size:48px_48px] opacity-25" />
         <div className="absolute -bottom-48 -right-36 size-[34rem] rounded-full bg-moss-500/15 blur-3xl" />
         <div className="relative z-10">
-          <BrandLogo href="/" />
+          <BrandLogo href="/" variant="white" />
         </div>
 
         <div className="relative z-10 my-auto max-w-xl">
@@ -64,6 +65,13 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
           </h1>
           <p className="mt-3 text-sm leading-6 text-stone-500">{description}</p>
           {children}
+          <div className="mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-semibold text-stone-400">
+            {legalLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="focus-ring rounded hover:text-slate-700">
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
     </main>

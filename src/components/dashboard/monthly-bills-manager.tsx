@@ -101,7 +101,7 @@ export function MonthlyBillsManager({
 
   return (
     <>
-      <div className="mb-6 flex justify-end">
+      <div className="mb-6 flex justify-start">
         <button onClick={() => show()} className="focus-ring inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white"><Plus className="size-4" /> Nova mensalidade</button>
       </div>
       {error && !open && <p role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
