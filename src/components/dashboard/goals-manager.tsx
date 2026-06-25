@@ -58,12 +58,15 @@ export function GoalsManager({
   const [success, setSuccess] = useState("");
   const [pending, startTransition] = useTransition();
 
+  const effectiveAllocationAmounts = buildEffectiveAllocationAmounts(allocations, investments, contributions);
   const activeGoals = goals.filter((goal) => goal.status === "active").length;
   const completedGoals = goals.filter((goal) => goal.status === "completed").length;
   const totalTarget = goals.reduce((sum, goal) => sum + Number(goal.target_amount), 0);
-  const totalCurrent = goals.reduce((sum, goal) => sum + Number(goal.current_amount), 0);
+  const totalCurrent = goals.reduce((sum, goal) => {
+    const allocatedAmount = getGoalAllocatedAmount(goal.id, allocations, effectiveAllocationAmounts);
+    return sum + (allocatedAmount > 0 ?allocatedAmount : Number(goal.current_amount));
+  }, 0);
   const globalProgress = progressPercent(totalCurrent, totalTarget);
-  const effectiveAllocationAmounts = buildEffectiveAllocationAmounts(allocations, investments, contributions);
 
   function show(goal: Goal | null = null) {
     setEditing(goal);
@@ -105,7 +108,8 @@ export function GoalsManager({
   return (
     <>
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <GoalMetric label="Total de objetivos" value={String(goals.length)} />
           <GoalMetric label="Objetivos ativos" value={String(activeGoals)} />
           <GoalMetric label="Concluídos" value={String(completedGoals)} />
           <GoalMetric label="Progresso geral" value={`${globalProgress}%`} />
@@ -437,13 +441,13 @@ function fixPortugueseText(value: string) {
     .replaceAll("Cart\u00c3\u00a3o", "Cartão")
     .replaceAll("cr\u00c3\u00a9dito", "crédito")
     .replaceAll("d\u00c3\u00a9bito", "débito")
-    .replaceAll("D\u00c3\u00a9bito", "D?bito")
-    .replaceAll("autom\u00c3\u00a1tico", "autom?tico")
-    .replaceAll("Sa\u00c3\u00bade", "Sa?de")
-    .replaceAll("Educa\u00c3\u00a7\u00c3\u00a3o", "Educa??o")
-    .replaceAll("Alimenta\u00c3\u00a7\u00c3\u00a3o", "Alimenta??o")
-    .replaceAll("Servi\u00c3\u00a7os", "Servi?os")
-    .replaceAll("Comiss\u00c3\u00a3o", "Comiss?o")
-    .replaceAll("Distribui\u00c3\u00a7\u00c3\u00a3o", "Distribui??o")
-    .replaceAll("Pr\u00c3\u00b3-Labore", "Pr?-Labore");
+    .replaceAll("D\u00c3\u00a9bito", "Débito")
+    .replaceAll("autom\u00c3\u00a1tico", "automático")
+    .replaceAll("Sa\u00c3\u00bade", "Saúde")
+    .replaceAll("Educa\u00c3\u00a7\u00c3\u00a3o", "Educação")
+    .replaceAll("Alimenta\u00c3\u00a7\u00c3\u00a3o", "Alimentação")
+    .replaceAll("Servi\u00c3\u00a7os", "Serviços")
+    .replaceAll("Comiss\u00c3\u00a3o", "Comissão")
+    .replaceAll("Distribui\u00c3\u00a7\u00c3\u00a3o", "Distribuição")
+    .replaceAll("Pr\u00c3\u00b3-Labore", "Pró-Labore");
 }

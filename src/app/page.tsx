@@ -14,6 +14,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { legalLinks } from "@/components/public/legal-page";
 
 const capabilities = [
   {
@@ -226,7 +227,16 @@ export default function Home() {
 
       <footer className="container-page flex flex-col items-center gap-5 border-t border-slate-200 py-11 text-center text-xs text-slate-500 sm:flex-row sm:justify-between sm:text-left">
         <BrandLogo className="h-16 w-auto sm:h-[4.25rem] lg:h-[4.6rem]" />
-        <p>© 2026 Carteira Inteligente · acarteirainteligente.com.br</p>
+        <div className="space-y-3 sm:text-right">
+          <p>© 2026 Carteira Inteligente · acarteirainteligente.com.br</p>
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 sm:justify-end">
+            {legalLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="focus-ring rounded font-semibold hover:text-slate-950">
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </footer>
     </main>
   );
