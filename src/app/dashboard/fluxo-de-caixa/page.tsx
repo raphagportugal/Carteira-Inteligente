@@ -27,7 +27,12 @@ import { getTransactionCashFlowDate } from "@/lib/finance/transaction-cash-flow"
 
 export const metadata: Metadata = { title: "Contas e Fluxo de Caixa" };
 
-export default async function CashFlowPage() {
+type CashFlowPageProps = {
+  searchParams: Promise<{ onboarding?: string }>;
+};
+
+export default async function CashFlowPage({ searchParams }: CashFlowPageProps) {
+  const { onboarding } = await searchParams;
   const today = new Date();
   const firstMonth = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
   const [
@@ -93,7 +98,7 @@ export default async function CashFlowPage() {
 
   return <>
     <PageHeading eyebrow="Caixa e planejamento" title="Contas e Fluxo de Caixa" description="Centralize seus saldos e acompanhe entradas, saídas, aportes e sobra mensal." />
-    <details className="dashboard-card mb-6 p-5 sm:p-6">
+    <details id="gerenciar-contas" open={onboarding === "conta"} className="dashboard-card mb-6 p-5 sm:p-6">
       <summary className="flex cursor-pointer list-none flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-moss-600">Contas bancárias</p>

@@ -15,6 +15,7 @@ import {
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { CategoriesBreakdown } from "@/components/dashboard/categories-breakdown";
 import { NewMovementButton } from "@/components/dashboard/new-movement-button";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { TransactionActions } from "@/components/dashboard/transaction-actions";
 import {
@@ -91,13 +92,24 @@ export default async function DashboardPage() {
     getTransactions({ limit: 5 }),
   ]);
 
+  const onboarding = (
+    <OnboardingChecklist
+      hasBankAccount={bankAccounts.length > 0}
+      hasCreditCard={creditCards.length > 0}
+      hasGoal={goals.length > 0}
+      hasTransaction={transactions.length > 0}
+    />
+  );
+
   if (
     transactions.length === 0 &&
     installments.length === 0 &&
     financings.length === 0 &&
     monthlyBills.length === 0 &&
     investments.length === 0 &&
-    bankAccounts.length === 0
+    bankAccounts.length === 0 &&
+    creditCards.length === 0 &&
+    goals.length === 0
   ) {
     return (
       <>
@@ -106,10 +118,11 @@ export default async function DashboardPage() {
           title="Sua vida financeira comeca aqui."
           description="Cadastre suas entradas, saídas, contas e objetivos para a Carteira Inteligente montar sua clareza financeira."
         />
+        {onboarding}
         <EmptyState
           icon={WalletCards}
-          title="Ainda nao ha dados financeiros"
-          description="Registre sua primeira movimentacao ou conta bancaria. A partir dela, sua visao executiva sera atualizada automaticamente."
+          title="Comece pelos primeiros passos"
+          description="Use o guia acima para cadastrar o mínimo necessário e montar sua primeira visão financeira. Você pode começar por uma conta, cartão, objetivo ou movimentação."
           action={<NewMovementButton />}
         />
       </>
@@ -322,6 +335,8 @@ export default async function DashboardPage() {
         title="Clareza financeira para decidir melhor."
         description="Uma leitura executiva do seu caixa, compromissos, patrimônio e objetivos com base nos dados já cadastrados."
       />
+
+      {onboarding}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <ExecutiveCard label="Caixa atual" value={formatCurrency(centralizedCash)} icon={WalletCards} tone="slate" help="Soma atual dos saldos de todas as contas bancarias." />

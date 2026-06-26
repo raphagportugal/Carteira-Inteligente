@@ -114,6 +114,9 @@ export function CreditCardsManager({ cards }: { cards: CreditCardRecord[] }) {
             <h2 className="mt-2 font-[var(--font-manrope)] text-2xl font-extrabold">Dados do cartão</h2>
             <form action={submit} className="mt-7 space-y-4">
               {editing && <input type="hidden" name="id" value={editing.id} />}
+              <p className="rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
+                Use apenas apelido, banco e últimos 4 dígitos para identificação. Não pedimos número completo, CVV, senha ou login do banco, e não acessamos seu cartão automaticamente.
+              </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label><span className="mb-2 block text-sm font-semibold">Nome</span><input name="name" required maxLength={80} defaultValue={editing?.name} placeholder="Ex.: Cartão principal" className="focus-ring h-12 w-full rounded-xl border border-slate-200 px-4 text-sm" /></label>
                 <label><span className="mb-2 block text-sm font-semibold">Banco</span><select name="bank" required defaultValue={editing?.bank ??""} className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm"><option value="" disabled>Selecione</option>{BANKS.map((bank) => <option key={bank}>{bank}</option>)}</select></label>
