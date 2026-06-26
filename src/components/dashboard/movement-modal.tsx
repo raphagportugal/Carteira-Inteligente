@@ -35,7 +35,7 @@ export function MovementModal({
 }: MovementModalProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [type, setType] = useState<TransactionType>("income");
+  const [type, setType] = useState<TransactionType>("expense");
   const [category, setCategory] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [linksMonthlyBill, setLinksMonthlyBill] = useState(false);
@@ -44,7 +44,7 @@ export function MovementModal({
 
   useEffect(() => {
     if (!open) return;
-    setType(transaction?.type ??"income");
+    setType(transaction?.type ??"expense");
     setCategory(transaction?.category ??"");
     setPaymentMethod(transaction?.payment_method ??"");
     setLinksMonthlyBill(Boolean(transaction?.monthly_bill_id));

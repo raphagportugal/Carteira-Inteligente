@@ -170,6 +170,9 @@ export function BankAccountsManager({
         <Modal title={editing ?"Editar conta" : "Nova conta"} close={() => setAccountOpen(false)}>
           <form action={submitAccount} className="space-y-4">
             {editing && <input type="hidden" name="id" value={editing.id} />}
+            <p className="rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
+              Use estes dados apenas para identificar sua conta no app. O número da conta é opcional, e a Carteira Inteligente não pede senha, login bancário nem acessa seu banco automaticamente.
+            </p>
             <label className="block"><span className="mb-2 block text-sm font-semibold">Banco</span><select name="bank" required defaultValue={editing?.bank ??""} className="h-12 w-full rounded-xl border bg-white px-4"><option value="" disabled>Selecione</option>{BANKS.map((bank) => <option key={bank}>{bank}</option>)}</select></label>
             <label className="block"><span className="mb-2 block text-sm font-semibold">Número da conta (opcional)</span><input name="account_number" defaultValue={editing?.account_number ??""} className="h-12 w-full rounded-xl border px-4" /></label>
             <label className="block"><span className="mb-2 block text-sm font-semibold">Saldo atual</span><input name="balance" required type="number" step="0.01" min="0" defaultValue={editing?.balance ??0} className="h-12 w-full rounded-xl border px-4" /></label>
