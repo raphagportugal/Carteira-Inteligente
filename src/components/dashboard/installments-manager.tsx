@@ -12,7 +12,8 @@ import {
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { CategoryIcon } from "@/components/dashboard/category-icon";
 import { EXPENSE_CATEGORIES } from "@/lib/finance/catalogs";
-import { dateFormatter, formatCurrency, parseDate } from "@/lib/finance/format";
+import { dateFormatter, parseDate } from "@/lib/finance/format";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import {
   getInstallmentSchedule,
   getRemainingSchedule,
@@ -152,8 +153,8 @@ export function InstallmentsManager({
       ) : (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
-            <div className="dashboard-card p-5"><p className="text-xs text-slate-400">Total mensal</p><p className="mt-2 text-lg font-extrabold">{formatCurrency(monthlyTotal)}</p></div>
-            <div className="dashboard-card p-5"><p className="text-xs text-slate-400">Saldo restante</p><p className="mt-2 text-lg font-extrabold">{formatCurrency(remainingTotal)}</p></div>
+            <div className="dashboard-card min-w-0 p-5"><p className="text-xs text-slate-400">Total mensal</p><CurrencyValue value={monthlyTotal} size="card" className="mt-2 block font-extrabold" /></div>
+            <div className="dashboard-card min-w-0 p-5"><p className="text-xs text-slate-400">Saldo restante</p><CurrencyValue value={remainingTotal} size="card" className="mt-2 block font-extrabold" /></div>
           </div>
           <section className="grid gap-4 lg:grid-cols-2">
             {installments.map((item) => {
@@ -188,18 +189,18 @@ export function InstallmentsManager({
                     </div>
                   </div>
                   <div className="mt-5 flex items-center justify-between">
-                    <p className="text-sm font-extrabold">{formatCurrency(totalAmount)}<span className="font-normal text-slate-400"> total</span></p>
+                    <p><CurrencyValue value={totalAmount} size="sm" className="font-extrabold" /><span className="font-normal text-slate-400"> total</span></p>
                     <span className={`rounded-full px-3 py-1 text-[10px] font-bold ${completed ?"bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-600"}`}>{completed ?"Concluído" : "Ativo"}</span>
                   </div>
                   <div className="mt-5 flex justify-between text-xs"><span className="text-slate-500">{paidInstallments} de {item.total_installments} pagas</span><span className="font-bold">{remainingInstallments} restantes</span></div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-moss-500" style={{ width: `${progress}%` }} /></div>
-                  <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-xs"><span className="text-slate-500">Valor restante</span><strong>{formatCurrency(remaining)}</strong></div>
+                  <div className="mt-5 flex flex-col gap-1 rounded-xl bg-slate-50 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between"><span className="text-slate-500">Valor restante</span><CurrencyValue value={remaining} size="sm" className="font-bold" /></div>
                   <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Próximas parcelas</p>
                     {remainingSchedule.slice(0, 3).map((entry) => (
                       <div key={entry.number} className="flex justify-between text-xs">
                         <span className="text-slate-500">{entry.number}ª · {dateFormatter.format(parseDate(entry.dueDate))}</span>
-                        <strong>{formatCurrency(entry.amount)}</strong>
+                        <CurrencyValue value={entry.amount} size="sm" className="font-bold" />
                       </div>
                     ))}
                     {remainingSchedule.length === 0 && <p className="text-xs text-slate-400">Cronograma concluído.</p>}

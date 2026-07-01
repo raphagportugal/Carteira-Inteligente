@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { createGoal, deleteGoal, updateGoal, upsertGoalInvestmentAllocation } from "@/app/dashboard/actions";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import {
   FINANCIAL_CATEGORIES,
   GOAL_PRIORITIES,
@@ -130,7 +131,7 @@ export function GoalsManager({
           action={<button onClick={() => show()} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">Criar objetivo</button>}
         />
       ) : (
-        <section className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+        <section className="grid gap-5 xl:grid-cols-2">
           {goals.map((goal, index) => (
             <GoalCard
               key={goal.id}
@@ -276,10 +277,10 @@ function GoalCard({
         {fixPortugueseText(goal.category)} · data alvo em {dateFormatter.format(parseDate(goal.target_date))}
       </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <GoalValue label="Valor atual" value={formatCurrency(currentAmount)} featured={featured} />
-        <GoalValue label="Valor alvo" value={formatCurrency(targetAmount)} featured={featured} />
-        <GoalValue label="Valor faltante" value={formatCurrency(missingAmount)} featured={featured} />
+      <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
+        <GoalValue label="Valor atual" value={currentAmount} featured={featured} />
+        <GoalValue label="Valor alvo" value={targetAmount} featured={featured} />
+        <GoalValue label="Valor faltante" value={missingAmount} featured={featured} />
       </div>
 
       <div className="mt-6">
@@ -328,14 +329,14 @@ function GoalCard({
                   const isAboveLimit = rawAllocated > effectiveAllocated;
                   return (
                     <div key={allocation.id} className={`rounded-xl p-3 text-xs ${featured ?"bg-white/5 text-slate-200" : "bg-white text-slate-600"}`}>
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                         <span className="min-w-0 truncate font-bold">{investment?.name ??"Investimento removido"}</span>
-                        <strong>{formatCurrency(effectiveAllocated)}</strong>
+                        <CurrencyValue value={effectiveAllocated} size="sm" className="font-bold" />
                       </div>
-                      <p className={`mt-1 ${featured ?"text-slate-400" : "text-slate-500"}`}>Disponível para este objetivo: {formatCurrency(availableForThisGoal)}</p>
+                      <p className={`mt-1 ${featured ?"text-slate-400" : "text-slate-500"}`}>Disponível para este objetivo: <CurrencyValue value={availableForThisGoal} size="sm" /></p>
                       {isAboveLimit && (
                         <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-700">
-                          Esta alocação foi ajustada ao limite disponível. Salve um valor até {formatCurrency(availableForThisGoal)} ou desvincule.
+                          Esta alocação foi ajustada ao limite disponível. Salve um valor até <CurrencyValue value={availableForThisGoal} size="sm" /> ou desvincule.
                         </p>
                       )}
                       <form action={allocate} className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
@@ -392,11 +393,11 @@ function GoalMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function GoalValue({ label, value, featured }: { label: string; value: string; featured: boolean }) {
+function GoalValue({ label, value, featured }: { label: string; value: number; featured: boolean }) {
   return (
-    <div className={`rounded-2xl p-3 ${featured ?"bg-white/5" : "bg-slate-50"}`}>
+    <div className={`min-w-0 rounded-2xl p-3 ${featured ?"bg-white/5" : "bg-slate-50"}`}>
       <p className={`text-[11px] font-semibold ${featured ?"text-slate-400" : "text-slate-500"}`}>{label}</p>
-      <p className={`mt-1 text-sm font-extrabold ${featured ?"text-white" : "text-slate-950"}`}>{value}</p>
+      <CurrencyValue value={value} size="sm" className={`mt-1 block font-extrabold tracking-tight ${featured ?"text-white" : "text-slate-950"}`} />
     </div>
   );
 }

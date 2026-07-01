@@ -11,7 +11,8 @@ import {
 import { CategoryIcon } from "@/components/dashboard/category-icon";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { EXPENSE_CATEGORIES } from "@/lib/finance/catalogs";
-import { formatCurrency, monthFormatter, parseDate } from "@/lib/finance/format";
+import { monthFormatter, parseDate } from "@/lib/finance/format";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import type { FinancialPlan } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
@@ -84,7 +85,7 @@ export function FinancialPlansManager({ plans }: { plans: FinancialPlan[] }) {
               </div>
               <p className="mt-5 text-xs capitalize text-slate-400">{monthFormatter.format(parseDate(plan.month))}</p>
               <h2 className="mt-1 font-extrabold">{fixPortugueseText(plan.category)}</h2>
-              <p className="mt-3 text-xl font-extrabold">{formatCurrency(Number(plan.planned_amount))}</p>
+              <CurrencyValue value={Number(plan.planned_amount)} size="lg" className="mt-3 block font-extrabold" />
             </article>
           ))}
         </section>

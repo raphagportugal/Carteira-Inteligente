@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { IncomeForecastsManager } from "@/components/dashboard/income-forecasts-manager";
 import { NewMovementButton } from "@/components/dashboard/new-movement-button";
 import { PageHeading } from "@/components/dashboard/page-heading";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import { addMonths, formatCurrency, monthFormatter } from "@/lib/finance/format";
 import { financingAmountInMonth } from "@/lib/finance/financing";
 import { getInstallmentSchedule } from "@/lib/finance/installment-schedule";
@@ -119,10 +120,10 @@ export default async function CashFlowPage({ searchParams }: CashFlowPageProps) 
         {months.map((month) => {
           const comparisonMax = Math.max(month.planned, month.executed, 1);
           return <article key={month.date.toISOString()} className="dashboard-card p-5 sm:p-6">
-            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><p className="text-xs font-bold uppercase tracking-wider text-moss-600">{monthFormatter.format(month.date)}</p><h2 className="mt-1 text-lg font-extrabold">Sobra de caixa: <span className={month.leftover >= 0 ?"text-moss-700" : "text-red-600"}>{formatCurrency(month.leftover)}</span></h2></div></div>
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">{monthFormatter.format(month.date)}</p><h2 className="mt-1 text-lg font-extrabold">Sobra de caixa: <CurrencyValue value={month.leftover} size="lg" className={month.leftover >= 0 ?"text-moss-700" : "text-red-600"} /></h2></div></div>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Entradas" value={month.entries} /><Metric label="Saidas" value={month.expenses} /><Metric label="Valor investido" value={month.invested} tone={metricTone(month.invested)} /><Metric label="Sobra de caixa" value={month.leftover} tone={metricTone(month.leftover)} /></div>
             <MonthDetails month={month} />
-            {month.planned > 0 && <div className="mt-5 border-t border-slate-100 pt-5"><div className="flex justify-between text-xs"><strong>Planejado vs Executado</strong><span>{formatCurrency(month.planned)} / {formatCurrency(month.executed)}</span></div><div className="mt-3 space-y-2"><div className="h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-400" style={{ width: `${month.planned / comparisonMax * 100}%` }} /></div><div className="h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-moss-500" style={{ width: `${month.executed / comparisonMax * 100}%` }} /></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{month.executedByCategory.map((item) => <div key={item.id} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs"><span>{item.category}</span><span className={item.executed > Number(item.planned_amount) ?"font-bold text-amber-600" : "font-bold"}>{formatCurrency(item.executed)} / {formatCurrency(Number(item.planned_amount))}</span></div>)}</div></div>}
+            {month.planned > 0 && <div className="mt-5 border-t border-slate-100 pt-5"><div className="flex flex-col gap-1 text-xs sm:flex-row sm:justify-between"><strong>Planejado vs Executado</strong><span><CurrencyValue value={month.planned} size="sm" /> / <CurrencyValue value={month.executed} size="sm" /></span></div><div className="mt-3 space-y-2"><div className="h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-400" style={{ width: `${month.planned / comparisonMax * 100}%` }} /></div><div className="h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-moss-500" style={{ width: `${month.executed / comparisonMax * 100}%` }} /></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{month.executedByCategory.map((item) => <div key={item.id} className="flex flex-col gap-1 rounded-lg bg-slate-50 px-3 py-2 text-xs sm:flex-row sm:justify-between"><span>{item.category}</span><span className={item.executed > Number(item.planned_amount) ?"font-bold text-amber-600" : "font-bold"}><CurrencyValue value={item.executed} size="sm" /> / <CurrencyValue value={Number(item.planned_amount)} size="sm" /></span></div>)}</div></div>}
           </article>;
         })}
       </section>
@@ -167,7 +168,7 @@ function MonthDetails({ month }: { month: CashFlowMonth }) {
             <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Distribuicao dos gastos</p>
-                <p className="mt-1 text-sm font-bold text-slate-700">{formatCurrency(totalExpenses)}</p>
+                <CurrencyValue value={totalExpenses} size="sm" className="mt-1 block font-bold text-slate-700" />
               </div>
               <ScoreBadge score={score} />
             </div>
@@ -185,7 +186,7 @@ function MonthDetails({ month }: { month: CashFlowMonth }) {
                     <span className="flex items-center gap-2 font-bold text-slate-700"><span className={`size-2 rounded-full ${group.color}`} />{group.label}</span>
                     <span className="font-extrabold text-slate-900">{formatPercent(expensePercent(group.value, totalExpenses) / 100)}</span>
                   </div>
-                  <p className="mt-1 text-slate-500">{formatCurrency(group.value)}</p>
+                  <CurrencyValue value={group.value} size="sm" className="mt-1 block text-slate-500" />
                 </div>
               ))}
             </div>
@@ -206,7 +207,7 @@ function MonthDetails({ month }: { month: CashFlowMonth }) {
 
 function CashFlowChart({ months }: { months: Array<{ date: Date; leftover: number; realized: boolean }> }) {
   const max = Math.max(...months.map((month) => Math.abs(month.leftover)), 1);
-  return <article className="dashboard-card p-5 sm:p-6"><div><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Sobra mensal</p><h2 className="mt-1 text-lg font-extrabold">Realizado e projetado</h2></div><div className="mt-6 flex h-56 items-end gap-3 border-b border-slate-100 pb-2">{months.map((month) => {
+  return <article className="dashboard-card max-w-full p-5 sm:p-6"><div><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Sobra mensal</p><h2 className="mt-1 text-lg font-extrabold">Realizado e projetado</h2></div><div className="mt-6 overflow-x-auto pb-2"><div className="flex h-56 min-w-full w-max items-end gap-4 border-b border-slate-100 pb-2">{months.map((month) => {
     const positive = month.leftover > 0;
     const negative = month.leftover < 0;
     const barColor = positive
@@ -215,8 +216,8 @@ function CashFlowChart({ months }: { months: Array<{ date: Date; leftover: numbe
         ?month.realized ?"bg-red-300" : "bg-rose-400"
         : "bg-slate-300";
     const valueColor = positive ?"text-emerald-700" : negative ?"text-red-600" : "text-slate-500";
-    return <div key={month.date.toISOString()} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><p className={`text-center text-[10px] font-extrabold leading-tight sm:text-xs ${valueColor}`}>{formatCompactCurrency(month.leftover)}</p><div title={formatCurrency(month.leftover)} className={`min-h-2 rounded-t-xl shadow-sm ${barColor}`} style={{ height: `${Math.max(8, Math.abs(month.leftover) / max * 100)}%` }} /><p className="text-center text-[10px] capitalize text-slate-400">{month.date.toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })}</p></div>;
-  })}</div><div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500"><span><span className="mr-1 inline-block size-2 rounded-full bg-moss-500" /> Realizado positivo</span><span><span className="mr-1 inline-block size-2 rounded-full bg-teal-400" /> Projetado positivo</span><span><span className="mr-1 inline-block size-2 rounded-full bg-rose-400" /> Negativo</span></div></article>;
+    return <div key={month.date.toISOString()} className="flex h-full w-36 shrink-0 flex-col justify-end gap-2"><CurrencyValue value={month.leftover} size="chart" className={`text-center font-extrabold leading-tight ${valueColor}`} /><div title={formatCurrency(month.leftover)} className={`min-h-2 rounded-t-xl shadow-sm ${barColor}`} style={{ height: `${Math.max(8, Math.abs(month.leftover) / max * 100)}%` }} /><p className="text-center text-[10px] capitalize text-slate-400">{month.date.toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })}</p></div>;
+  })}</div></div><div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500"><span><span className="mr-1 inline-block size-2 rounded-full bg-moss-500" /> Realizado positivo</span><span><span className="mr-1 inline-block size-2 rounded-full bg-teal-400" /> Projetado positivo</span><span><span className="mr-1 inline-block size-2 rounded-full bg-rose-400" /> Negativo</span></div></article>;
 }
 
 type MonthScore = "Excelente" | "Bom" | "Atenção" | "Crítico";
@@ -243,7 +244,7 @@ function RatioLine({ label, value, tone }: { label: string; value: number; tone:
 
 function Metric({ label, value, tone = "slate" }: { label: string; value: number; tone?: "slate" | "green" | "red" }) {
   const colors = { slate: "text-slate-900", green: "text-emerald-600", red: "text-red-600" };
-  return <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs text-slate-400">{label}</p><p className={`mt-2 font-extrabold ${colors[tone]}`}>{formatCurrency(value)}</p></div>;
+  return <div className="min-w-0 rounded-xl bg-slate-50 p-4"><p className="text-xs text-slate-400">{label}</p><CurrencyValue value={value} size="card" className={`mt-2 block font-extrabold ${colors[tone]}`} /></div>;
 }
 
 function metricTone(value: number): MetricTone {
@@ -278,14 +279,5 @@ function formatPercent(value: number) {
   return new Intl.NumberFormat("pt-BR", {
     maximumFractionDigits: 0,
     style: "percent",
-  }).format(value);
-}
-
-function formatCompactCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-    style: "currency",
-    currency: "BRL",
   }).format(value);
 }

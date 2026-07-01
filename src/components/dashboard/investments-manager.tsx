@@ -14,8 +14,9 @@ import {
 } from "@/app/dashboard/actions";
 import { InvestmentTypeIcon } from "@/components/dashboard/category-icon";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import { INVESTMENT_TYPES } from "@/lib/finance/catalogs";
-import { dateFormatter, formatCurrency, parseDate } from "@/lib/finance/format";
+import { dateFormatter, parseDate } from "@/lib/finance/format";
 import {
   getInvestmentCurrentDate,
   getInvestmentInitialDate,
@@ -95,7 +96,7 @@ export function InvestmentsManager({
           <section className="mb-8 grid gap-4 sm:grid-cols-3">
             <Metric label="Total investido" value={invested} />
             <Metric label="Total em patrimônio" value={patrimony} />
-            <div className="rounded-2xl bg-slate-950 p-5 text-white"><p className="text-xs text-slate-400">Patrimônio total consolidado</p><p className="mt-2 text-xl font-extrabold">{formatCurrency(invested + patrimony)}</p></div>
+            <div className="min-w-0 rounded-2xl bg-slate-950 p-5 text-white"><p className="text-xs text-slate-400">Patrimônio total consolidado</p><CurrencyValue value={invested + patrimony} size="lg" className="mt-2 block font-extrabold" /></div>
           </section>
           <Group title="Investimentos" items={investmentsOnly} positionOf={positionOf} typeOf={typeOf} openItem={openItem} setDialog={setDialog} remove={(item) => {
             if (window.confirm(`Excluir "${item.name}"? `)) run(() => deleteInvestment(item.id), "Investimento excluído.");
@@ -199,7 +200,7 @@ function Group({ title, items, positionOf, typeOf, openItem, setDialog, remove }
   if (!items.length) return null;
   return <section className="mb-8"><p className="mb-4 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">{title}</p><div className="grid gap-4 lg:grid-cols-2">{items.map((item) => {
     const asset = assetTypes.has(typeOf(item));
-    return <article key={item.id} className="dashboard-card p-5"><div className="flex gap-4"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-moss-50 text-moss-600"><InvestmentTypeIcon type={typeOf(item)} /></span><div className="min-w-0 flex-1"><h2 className="font-extrabold">{item.name}</h2><p className="text-xs text-slate-400">{item.institution} · {INVESTMENT_TYPES.find((entry) => entry.value === typeOf(item))?.label}</p><p className="mt-3 text-xl font-extrabold">{formatCurrency(positionOf(item))}</p><p className="mt-1 text-xs text-slate-400">Referência: {dateFormatter.format(parseDate(getInvestmentCurrentDate(item)))}</p></div><div className="flex"><button onClick={() => openItem(item)} className="grid size-8 place-items-center text-slate-400"><Pencil className="size-4" /></button><button onClick={() => remove(item)} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button></div></div>{!asset && <div className="mt-5 flex flex-wrap gap-2"><button onClick={() => setDialog({ kind: "contribution", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-moss-50 px-3 py-2 text-xs font-bold text-moss-700"><ArrowDownToLine className="size-3.5" /> Aportar</button><button onClick={() => setDialog({ kind: "withdrawal", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"><ArrowDownToLine className="size-3.5 rotate-180" /> Sacar</button><button onClick={() => setDialog({ kind: "history", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold"><History className="size-3.5" /> Histórico</button></div>}</article>;
+    return <article key={item.id} className="dashboard-card min-w-0 p-5"><div className="flex gap-4"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-moss-50 text-moss-600"><InvestmentTypeIcon type={typeOf(item)} /></span><div className="min-w-0 flex-1"><h2 className="font-extrabold">{item.name}</h2><p className="text-xs text-slate-400">{item.institution} · {INVESTMENT_TYPES.find((entry) => entry.value === typeOf(item))?.label}</p><CurrencyValue value={positionOf(item)} size="lg" className="mt-3 block font-extrabold" /><p className="mt-1 text-xs text-slate-400">Referência: {dateFormatter.format(parseDate(getInvestmentCurrentDate(item)))}</p></div><div className="flex shrink-0"><button onClick={() => openItem(item)} className="grid size-8 place-items-center text-slate-400"><Pencil className="size-4" /></button><button onClick={() => remove(item)} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button></div></div>{!asset && <div className="mt-5 flex flex-wrap gap-2"><button onClick={() => setDialog({ kind: "contribution", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-moss-50 px-3 py-2 text-xs font-bold text-moss-700"><ArrowDownToLine className="size-3.5" /> Aportar</button><button onClick={() => setDialog({ kind: "withdrawal", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"><ArrowDownToLine className="size-3.5 rotate-180" /> Sacar</button><button onClick={() => setDialog({ kind: "history", investment: item })} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold"><History className="size-3.5" /> Histórico</button></div>}</article>;
   })}</div></section>;
 }
 
@@ -218,9 +219,9 @@ function HistoryModal({ investment, contributions, withdrawals, currentPosition,
     <div className="grid gap-3 sm:grid-cols-3">
       <Metric label="Posição inicial" value={initial} />
       <Metric label="Total aportado" value={contributions.reduce((sum, item) => sum + Number(item.amount), 0)} />
-      <div className="rounded-xl bg-slate-950 p-4 text-white"><p className="text-xs text-slate-400">Posição atual informada</p><p className="mt-2 text-lg font-extrabold">{formatCurrency(currentPosition)}</p></div>
+      <div className="min-w-0 rounded-xl bg-slate-950 p-4 text-white"><p className="text-xs text-slate-400">Posição atual informada</p><CurrencyValue value={currentPosition} size="lg" className="mt-2 block font-extrabold" /></div>
     </div>
-    <div className="mt-5 rounded-xl bg-slate-50 p-4"><div className="flex justify-between text-xs"><span>Evolução simples</span><strong className={difference >= 0 ?"text-emerald-600" : "text-red-600"}>{difference >= 0 ?"+" : ""}{formatCurrency(difference)}</strong></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-moss-500" style={{ width: `${Math.min(100, currentPosition > 0 ?initial / currentPosition * 100 : 0)}%` }} /></div></div>
+    <div className="mt-5 rounded-xl bg-slate-50 p-4"><div className="flex flex-col gap-1 text-xs sm:flex-row sm:justify-between"><span>Evolução simples</span><CurrencyValue value={difference} sign={difference >= 0 ?"+" : undefined} size="sm" className={`font-bold ${difference >= 0 ?"text-emerald-600" : "text-red-600"}`} /></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-moss-500" style={{ width: `${Math.min(100, currentPosition > 0 ?initial / currentPosition * 100 : 0)}%` }} /></div></div>
     <div className="mt-6 space-y-2">
       <Timeline label="Posição inicial" date={getInvestmentInitialDate(investment)} amount={initial} />
       {contributions.sort((a, b) => a.contribution_date.localeCompare(b.contribution_date)).map((item) => <Timeline key={item.id} label="Aporte realizado" date={item.contribution_date} amount={Number(item.amount)} remove={() => remove(item.id)} />)}
@@ -231,7 +232,7 @@ function HistoryModal({ investment, contributions, withdrawals, currentPosition,
 }
 
 function Timeline({ label, date, amount, remove }: { label: string; date: string; amount: number; remove?: () => void }) {
-  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="size-2 rounded-full bg-moss-500" /><div className="flex-1"><p className="text-sm font-bold">{label}</p><p className="text-xs text-slate-400">{dateFormatter.format(parseDate(date))}</p></div><p className={`text-sm font-extrabold ${amount < 0 ?"text-red-600" : ""}`}>{formatCurrency(amount)}</p>{remove && <button onClick={remove} className="grid size-8 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button>}</div>;
+  return <div className="flex min-w-0 items-center gap-3 rounded-xl bg-slate-50 p-3"><span className="size-2 shrink-0 rounded-full bg-moss-500" /><div className="min-w-0 flex-1"><p className="text-sm font-bold">{label}</p><p className="text-xs text-slate-400">{dateFormatter.format(parseDate(date))}</p></div><CurrencyValue value={amount} size="sm" className={`max-w-[40%] text-right font-extrabold sm:max-w-none ${amount < 0 ?"text-red-600" : ""}`} />{remove && <button onClick={remove} className="grid size-8 shrink-0 place-items-center text-slate-400 hover:text-red-500"><Trash2 className="size-4" /></button>}</div>;
 }
 
 function AccountSelect({ accounts, label }: { accounts: BankAccount[]; label: string }) {
@@ -247,7 +248,7 @@ function DateField({ name, label, defaultValue }: { name: string; label: string;
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
-  return <div className="dashboard-card p-4"><p className="text-xs text-slate-400">{label}</p><p className="mt-2 text-lg font-extrabold">{formatCurrency(value)}</p></div>;
+  return <div className="dashboard-card min-w-0 p-4"><p className="text-xs text-slate-400">{label}</p><CurrencyValue value={value} size="card" className="mt-2 block font-extrabold" /></div>;
 }
 
 function Modal({ title, close, children }: { title: string; close: () => void; children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -20,6 +20,7 @@ import {
 } from "@/app/dashboard/actions";
 import { FinancingTypeIcon } from "@/components/dashboard/category-icon";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import {
   FINANCING_RATE_INDEXES,
   FINANCING_RATE_TYPES,
@@ -31,7 +32,6 @@ import {
 } from "@/lib/finance/financing";
 import {
   dateFormatter,
-  formatCurrency,
   parseDate,
 } from "@/lib/finance/format";
 import type {
@@ -269,15 +269,11 @@ export function FinancingsManager({
               <p className="text-xs text-slate-400">
                 Valor financiado líquido
               </p>
-              <p className="mt-2 text-xl font-extrabold">
-                {formatCurrency(totalFinanced)}
-              </p>
+              <CurrencyValue value={totalFinanced} size="lg" className="mt-2 block font-extrabold" />
             </div>
             <div className="dashboard-card p-5">
               <p className="text-xs text-slate-400">Saldo devedor atual</p>
-              <p className="mt-2 text-xl font-extrabold">
-                {formatCurrency(currentDebt)}
-              </p>
+              <CurrencyValue value={currentDebt} size="lg" className="mt-2 block font-extrabold" />
             </div>
             <div className="dashboard-card p-5">
               <p className="text-xs text-slate-400">Renda comprometida</p>
@@ -367,9 +363,7 @@ export function FinancingsManager({
                         <p className="text-[10px] uppercase tracking-wider text-slate-400">
                           Valor financiado líquido
                         </p>
-                        <p className="mt-1 text-sm font-extrabold">
-                          {formatCurrency(financedAmount)}
-                        </p>
+                        <CurrencyValue value={financedAmount} size="sm" className="mt-1 block font-extrabold" />
                       </div>
                       <div>
                         <p className="text-[10px] uppercase tracking-wider text-slate-400">
@@ -377,9 +371,7 @@ export function FinancingsManager({
                         </p>
                         <p className="mt-1 text-sm font-extrabold">
                           {item.current_outstanding_balance !== null
-                            ? formatCurrency(
-                                Number(item.current_outstanding_balance),
-                              )
+                            ? <CurrencyValue value={Number(item.current_outstanding_balance)} size="sm" />
                             : "Não informado"}
                         </p>
                       </div>
@@ -389,7 +381,7 @@ export function FinancingsManager({
                         </p>
                         <p className="mt-1 text-sm font-extrabold">
                           {item.type === "custom_plan"
-                            ? "Valores personalizados" : formatCurrency(Number(item.monthly_payment))}
+                            ? "Valores personalizados" : <CurrencyValue value={Number(item.monthly_payment)} size="sm" />}
                         </p>
                         {rateIndex && (
                           <p className="mt-1 text-xs font-semibold text-moss-700">
@@ -841,12 +833,12 @@ function FinancingDetails({
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <Detail label="Valor financiado líquido" value={formatCurrency(financedAmount)} />
+          <Detail label="Valor financiado líquido" value={<CurrencyValue value={financedAmount} size="sm" />} />
           <Detail
             label="Saldo devedor atual"
             value={
               financing.current_outstanding_balance !== null
-                ? formatCurrency(Number(financing.current_outstanding_balance))
+                ? <CurrencyValue value={Number(financing.current_outstanding_balance)} size="sm" />
                 : "Não informado"
             }
           />
@@ -854,7 +846,7 @@ function FinancingDetails({
             label="Parcela"
             value={
               financing.type === "custom_plan"
-                ? "Valores personalizados" : formatCurrency(Number(financing.monthly_payment))
+                ? "Valores personalizados" : <CurrencyValue value={Number(financing.monthly_payment)} size="sm" />
             }
           />
           <Detail
@@ -906,8 +898,8 @@ function FinancingDetails({
               Marcar todas as vencidas como pagas
             </button>
           )}
-          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
-            <div className="grid grid-cols-[.7fr_1fr_1fr_.9fr] gap-3 bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="mt-4 rounded-2xl border border-slate-200">
+            <div className="hidden grid-cols-[.7fr_1fr_1fr_.9fr] gap-3 bg-slate-50 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:grid">
               <span>Parcela</span>
               <span>Data</span>
               <span>Valor</span>
@@ -919,7 +911,7 @@ function FinancingDetails({
                 return (
                 <div
                   key={`${entry.number}-${entry.dueDate}`}
-                  className={`grid grid-cols-[.7fr_1fr_1fr_.9fr] items-center gap-3 px-4 py-3 text-sm transition ${
+                  className={`grid min-w-0 grid-cols-2 items-center gap-3 px-4 py-3 text-sm transition sm:grid-cols-[.7fr_1fr_1fr_.9fr] ${
                     paid
                       ? "bg-emerald-50/80" : entry.status === "past"
                         ? "bg-amber-50/70" : "bg-white"
@@ -927,9 +919,7 @@ function FinancingDetails({
                 >
                   <span className="font-bold">{entry.number}</span>
                   <span>{dateFormatter.format(parseDate(entry.dueDate))}</span>
-                  <span className="font-semibold">
-                    {formatCurrency(entry.amount)}
-                  </span>
+                  <CurrencyValue value={entry.amount} size="sm" className="font-semibold" />
                   {entry.status === "past" ? (
                     <label className="flex cursor-pointer items-center gap-2">
                       <input
@@ -962,7 +952,7 @@ function FinancingDetails({
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-xl border border-slate-100 p-4">
       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">

@@ -13,6 +13,7 @@ import {
   TrendingUp,
   WalletCards,
 } from "lucide-react";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import { BrandLogo } from "@/components/brand-logo";
 import { legalLinks } from "@/components/public/legal-page";
 
@@ -130,7 +131,7 @@ export default function Home() {
                 <div className="mt-8 rounded-2xl bg-white p-5 text-slate-900">
                   <p className="text-xs font-medium text-slate-400">Saldo realmente disponível</p>
                   <div className="mt-1 flex items-end justify-between">
-                    <p className="text-3xl font-extrabold">R$ 3.200</p>
+                    <CurrencyValue value="R$ 3.200" size="xl" className="font-extrabold" />
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-600">+14% este mês</span>
                   </div>
                   <div className="mt-7 grid grid-cols-3 gap-3">
@@ -141,7 +142,7 @@ export default function Home() {
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-xl bg-slate-50 p-3">
                         <p className="text-[10px] text-slate-400">{label}</p>
-                        <p className="mt-1 text-xs font-extrabold">{value}</p>
+                        <CurrencyValue value={value} size="sm" className="mt-1 block font-extrabold" />
                       </div>
                     ))}
                   </div>

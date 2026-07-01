@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { CurrencyValue } from "@/components/ui/currency-value";
 
 type StatTone = "positive" | "negative" | "neutral" | "warning";
 
@@ -20,19 +21,15 @@ const tones: Record<StatTone, { icon: string; value: string }> = {
 export function StatCard({ label, value, icon: Icon, tone = "neutral", detail }: StatCardProps) {
   return (
     <article className="dashboard-card p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-400">{label}</p>
-          <p className={`mt-2 truncate font-[var(--font-manrope)] text-2xl font-extrabold tracking-tight ${tones[tone].value}`}>
-            {value}
-          </p>
-        </div>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <p className="min-w-0 text-xs font-semibold text-slate-400">{label}</p>
         {Icon && (
           <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tones[tone].icon}`}>
             <Icon className="size-5" />
           </span>
         )}
       </div>
+      <CurrencyValue value={value} size="xl" className={`mt-2 block font-[var(--font-manrope)] font-extrabold tracking-tight ${tones[tone].value}`} />
       {detail && <p className="mt-4 text-xs font-semibold text-slate-500">{detail}</p>}
     </article>
   );

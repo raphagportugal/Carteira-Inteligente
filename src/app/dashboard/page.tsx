@@ -18,12 +18,12 @@ import { NewMovementButton } from "@/components/dashboard/new-movement-button";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { TransactionActions } from "@/components/dashboard/transaction-actions";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import {
   CategoryIcon,
 } from "@/components/dashboard/category-icon";
 import {
   addMonths,
-  compactCurrencyFormatter,
   dateFormatter,
   formatCurrency,
   getMonthRange,
@@ -339,13 +339,13 @@ export default async function DashboardPage() {
       {onboarding}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <ExecutiveCard label="Caixa atual" value={formatCurrency(centralizedCash)} icon={WalletCards} tone="slate" help="Soma atual dos saldos de todas as contas bancarias." />
-        <ExecutiveCard label="Sobra do mês" value={formatCurrency(cashLeftover)} icon={PiggyBank} tone={toneFromValue(cashLeftover)} detail={deltaLabel(cashLeftover - previousLeftover)} help="Entradas menos saídas comprometidas e aportes do mês." />
-        <ExecutiveCard label="Capacidade de poupança" value={formatCurrency(savingsCapacity)} icon={ShieldCheck} tone={toneFromValue(savingsCapacity)} help="Entradas do mês menos despesas comprometidas, antes de aportes." />
-        <ExecutiveCard label="Investido no mês" value={formatCurrency(monthlyInvestedNet)} icon={TrendingUp} tone={toneFromValue(monthlyInvestedNet)} detail={monthlyInvestedNet > previousInvestedNet ?"Acima do mês anterior" : previousInvestedNet > monthlyInvestedNet ?"Abaixo do mês anterior" : "Estável vs. mês anterior"} help="Aportes menos saques em investimentos que impactam o caixa neste mês." />
-        <ExecutiveCard label="Patrimônio atual" value={formatCurrency(totalAssets)} icon={Landmark} tone={toneFromValue(totalAssets)} help="Caixa centralizado, investimentos e bens patrimoniais cadastrados." />
-        <ExecutiveCard label="Investimentos" value={formatCurrency(investmentTotal)} icon={TrendingUp} tone={toneFromValue(investmentTotal)} help="Posição atual dos investimentos cadastrados." />
-        <ExecutiveCard label="Bens patrimoniais" value={formatCurrency(patrimonyOnly)} icon={CircleDollarSign} tone="slate" help="Imoveis, veiculos, participacoes e outros bens." />
+        <ExecutiveCard label="Caixa atual" value={centralizedCash} icon={WalletCards} tone="slate" help="Soma atual dos saldos de todas as contas bancarias." />
+        <ExecutiveCard label="Sobra do mês" value={cashLeftover} icon={PiggyBank} tone={toneFromValue(cashLeftover)} detail={deltaLabel(cashLeftover - previousLeftover)} help="Entradas menos saídas comprometidas e aportes do mês." />
+        <ExecutiveCard label="Capacidade de poupança" value={savingsCapacity} icon={ShieldCheck} tone={toneFromValue(savingsCapacity)} help="Entradas do mês menos despesas comprometidas, antes de aportes." />
+        <ExecutiveCard label="Investido no mês" value={monthlyInvestedNet} icon={TrendingUp} tone={toneFromValue(monthlyInvestedNet)} detail={monthlyInvestedNet > previousInvestedNet ?"Acima do mês anterior" : previousInvestedNet > monthlyInvestedNet ?"Abaixo do mês anterior" : "Estável vs. mês anterior"} help="Aportes menos saques em investimentos que impactam o caixa neste mês." />
+        <ExecutiveCard label="Patrimônio atual" value={totalAssets} icon={Landmark} tone={toneFromValue(totalAssets)} help="Caixa centralizado, investimentos e bens patrimoniais cadastrados." />
+        <ExecutiveCard label="Investimentos" value={investmentTotal} icon={TrendingUp} tone={toneFromValue(investmentTotal)} help="Posição atual dos investimentos cadastrados." />
+        <ExecutiveCard label="Bens patrimoniais" value={patrimonyOnly} icon={CircleDollarSign} tone="slate" help="Imoveis, veiculos, participacoes e outros bens." />
         <ExecutiveCard label="Objetivos ativos" value={String(activeGoals.length)} icon={Target} tone={activeGoals.length > 0 ?"green" : "slate"} help="Objetivos financeiros em andamento." />
       </section>
 
@@ -363,7 +363,7 @@ export default async function DashboardPage() {
             </div>
             <Link href="/dashboard/fluxo-de-caixa" className="inline-flex items-center gap-1 text-xs font-bold text-moss-700">Ver fluxo <ArrowRight className="size-4" /></Link>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
             <CommitmentCard href="/dashboard/mensalidades" label="Mensalidades" value={activeMonthlyTotal * 3} detail={`${monthlyBills.filter((bill) => bill.status === "active").length} recorrentes`} />
             <CommitmentCard href="/dashboard/parcelamentos" label="Parcelamentos" value={futureInstallmentTotal} detail={`${futureInstallments.length} vencimentos`} />
             <CommitmentCard href="/dashboard/financiamentos" label="Financiamentos" value={financingNinetyDays} detail={`${financings.filter((item) => getFinancingRemainingMonths(item, customPaymentsByFinancing.get(item.id) ??[]) > 0).length} contratos`} />
@@ -371,7 +371,7 @@ export default async function DashboardPage() {
           <div className="mt-5 rounded-2xl bg-slate-50 p-4">
             <div className="flex items-center justify-between text-sm">
               <span className="font-bold text-slate-600">Pressao futura estimada</span>
-              <strong>{formatCurrency(futureCommitments)}</strong>
+              <CurrencyValue value={futureCommitments} size="sm" className="font-extrabold" />
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
               <div className={`h-full rounded-full ${futureCommitments > Math.max(centralizedCash, monthlyIncome) ?"bg-amber-500" : "bg-moss-500"}`} style={{ width: `${Math.min(100, futureCommitments / Math.max(1, centralizedCash + monthlyIncome) * 100)}%` }} />
@@ -403,7 +403,7 @@ function ExecutiveCard({
   help,
 }: {
   label: string;
-  value: string;
+  value: number | string;
   icon: LucideIcon;
   tone: MetricTone;
   detail?: string;
@@ -416,15 +416,13 @@ function ExecutiveCard({
   };
   return (
     <article className="dashboard-card p-5" title={help}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-400">{label}</p>
-          <p className={`mt-2 truncate font-[var(--font-manrope)] text-2xl font-extrabold tracking-tight ${styles[tone].text}`}>{value}</p>
-        </div>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <p className="min-w-0 text-xs font-semibold text-slate-400">{label}</p>
         <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${styles[tone].icon}`}>
           <Icon className="size-5" />
         </span>
       </div>
+      <CurrencyValue value={value} size="xl" className={`mt-2 block font-[var(--font-manrope)] font-extrabold tracking-tight ${styles[tone].text}`} />
       {detail && <p className="mt-4 text-xs font-semibold text-slate-500">{detail}</p>}
     </article>
   );
@@ -443,7 +441,7 @@ function PatrimonyEvolutionChart({ evolution }: { evolution: Array<{ date: Date;
         <p className="mt-1 text-xs text-slate-400">Janela movel dos ultimos 6 mêses, usando caixa, investimentos e bens cadastrados.</p>
       </div>
       <div className="mt-6 overflow-x-auto pb-2">
-        <div className="flex h-56 min-w-[30rem] items-end gap-3 border-b border-slate-100 pb-2 sm:min-w-0">
+        <div className="flex h-56 min-w-full w-max items-end gap-4 border-b border-slate-100 pb-2">
         {evolution.map((item) => {
           const positive = item.value > 0;
           const negative = item.value < 0;
@@ -451,8 +449,8 @@ function PatrimonyEvolutionChart({ evolution }: { evolution: Array<{ date: Date;
           const valueColor = positive ?"text-emerald-700" : negative ?"text-red-600" : "text-slate-500";
           const height = max === min ?62 : 18 + ((item.value - min) / range) * 82;
           return (
-            <div key={item.date.toISOString()} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
-              <p className={`text-center text-[10px] font-extrabold leading-tight sm:text-xs ${valueColor}`}>{compactCurrencyFormatter.format(item.value)}</p>
+            <div key={item.date.toISOString()} className="flex h-full w-36 shrink-0 flex-col justify-end gap-2">
+              <CurrencyValue value={item.value} size="chart" className={`text-center font-extrabold leading-tight ${valueColor}`} />
               <div className={`min-h-4 rounded-t-xl shadow-sm ${barColor}`} style={{ height: `${Math.min(100, Math.max(12, height))}%` }} />
               <p className="text-center text-[10px] capitalize text-slate-400">{item.date.toLocaleDateString("pt-BR", { month: "short", timeZone: "UTC" })}</p>
             </div>
@@ -494,7 +492,7 @@ function CommitmentCard({ href, label, value, detail }: { href: string; label: s
   return (
     <Link href={href} className="rounded-2xl bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:bg-slate-100">
       <p className="text-xs font-semibold text-slate-400">{label}</p>
-      <p className="mt-2 text-lg font-extrabold">{formatCurrency(value)}</p>
+      <CurrencyValue value={value} size="card" className="mt-2 block font-extrabold" />
       <p className="mt-1 text-xs text-slate-500">{detail}</p>
     </Link>
   );
@@ -534,8 +532,8 @@ function GoalsPanel({
                 <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-bold">{goal.name}</p>
-                    <p className="mt-1 text-xs text-slate-500">{formatCurrency(currentAmount)} de {formatCurrency(targetAmount)}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-400">Faltam {formatCurrency(missingAmount)}</p>
+                    <p className="mt-1 text-xs text-slate-500"><CurrencyValue value={currentAmount} size="sm" /> de <CurrencyValue value={targetAmount} size="sm" /></p>
+                    <p className="mt-1 text-xs font-semibold text-slate-400">Faltam <CurrencyValue value={missingAmount} size="sm" /></p>
                   </div>
                   <span className="rounded-full bg-white px-2.5 py-1 text-xs font-extrabold text-moss-700">{progress}%</span>
                 </div>
@@ -611,8 +609,8 @@ function RecentTransactionsPanel({
                   <p className="truncate text-sm font-bold">{transaction.description}</p>
                   <p className="text-xs text-slate-400">{dateFormatter.format(parseDate(transaction.transaction_date))}</p>
                 </div>
-                <div className="min-w-0 shrink-0 text-right">
-                  <p className={`max-w-[8rem] truncate text-sm font-extrabold sm:max-w-none ${income ?"text-emerald-600" : "text-slate-900"}`}>{income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}</p>
+                <div className="min-w-0 max-w-[45%] shrink-0 text-right sm:max-w-none">
+                  <CurrencyValue value={Number(transaction.amount)} sign={income ?"+" : "-"} size="sm" className={`font-extrabold ${income ?"text-emerald-600" : "text-slate-900"}`} />
                   <p className="mt-1 text-[10px] font-bold text-moss-700 group-open:hidden">Ver detalhes</p>
                   <p className="mt-1 hidden text-[10px] font-bold text-slate-400 group-open:block">Ocultar</p>
                 </div>

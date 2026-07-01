@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CurrencyValue } from "@/components/ui/currency-value";
 
 type CategoriesBreakdownProps = {
   categories: Array<[string, number]>;
@@ -33,7 +34,7 @@ export function CategoriesBreakdown({
       <div className="grid min-w-0 gap-5 sm:grid-cols-[11rem_1fr] sm:items-center">
         <div className="mx-auto grid size-44 place-items-center rounded-full" style={{ background: pieBackground }}>
           <div className="grid size-24 place-items-center rounded-full bg-white text-center shadow-sm">
-            <span className="px-2 text-xs font-extrabold text-slate-700">{formatCurrency(monthlyExpenses)}</span>
+            <CurrencyValue value={monthlyExpenses} size="chart" className="px-2 text-center font-extrabold leading-tight text-slate-700" />
           </div>
         </div>
         <div className="min-w-0 space-y-3">
@@ -70,7 +71,7 @@ export function CategoriesBreakdown({
                       <p className="break-words text-sm font-bold text-slate-700">{category}</p>
                       <p className="mt-1 text-xs text-slate-500">{formatPercent(amount / total)} das saídas categorizadas</p>
                     </div>
-                    <strong className="text-sm text-slate-950 sm:shrink-0">{formatCurrency(amount)}</strong>
+                    <CurrencyValue value={amount} size="sm" className="font-bold text-slate-950 sm:shrink-0" />
                   </div>
                 </div>
               ))}
@@ -80,13 +81,6 @@ export function CategoriesBreakdown({
       )}
     </div>
   );
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
 }
 
 function formatPercent(value: number) {
