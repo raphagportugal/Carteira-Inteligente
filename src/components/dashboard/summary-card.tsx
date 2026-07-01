@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { CurrencyValue } from "@/components/ui/currency-value";
 
 type SummaryCardProps = {
   label: string;
@@ -30,17 +31,13 @@ export function SummaryCard({
 
   return (
     <article className="dashboard-card p-5" title={help}>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium text-slate-400">{label}</p>
-          <p className="mt-2 font-[var(--font-manrope)] text-2xl font-extrabold tracking-tight">
-            {value}
-          </p>
-        </div>
-        <span className={`grid size-10 place-items-center rounded-xl ${tones[tone]}`}>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <p className="min-w-0 text-xs font-medium text-slate-400">{label}</p>
+        <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}>
           <Icon className="size-5" />
         </span>
       </div>
+      <CurrencyValue value={value} size="xl" className="mt-2 block font-[var(--font-manrope)] font-extrabold tracking-tight" />
       {change && <p
         className={`mt-5 flex items-center gap-1 text-xs font-bold ${
           trend === "down" ?"text-amber-600" : "text-emerald-600"

@@ -60,6 +60,48 @@ Upload de PDF, integração bancária e inteligência artificial ainda não faze
 - Segurança e privacidade exigem validação de sessão, filtro por `user_id` e RLS como segunda camada.
 - Mudanças de banco devem ser aditivas e preservar dados existentes.
 
+### Decisões permanentes de UX
+
+- Todo valor monetário deve ser sempre exibido integralmente.
+- Valores financeiros nunca devem ser truncados com reticências.
+- Valores financeiros nunca devem extrapolar cards, tabelas, botões ou containers.
+- A interface deve se adaptar ao tamanho do valor, e não esconder o valor.
+
+### Decisões permanentes do modelo financeiro
+
+- O Carteira Inteligente deve distinguir explicitamente valores **Planejados** e **Realizados**.
+- O modelo mental do produto deve tratar quatro estados financeiros:
+  - Entradas Planejadas.
+  - Entradas Realizadas.
+  - Saídas Planejadas.
+  - Saídas Realizadas.
+- Essa distinção deve ser usada de forma consistente nas telas financeiras relevantes.
+
+### Decisão permanente sobre cartões
+
+- O conceito técnico e de produto deve ser **Competência do Cartão**, não apenas **Tela da Fatura**.
+- Uma competência representa um cartão em um mês/ano específico, com lançamentos, total e status.
+- Os status previstos são **Aberta**, **Fechada** e **Paga**.
+- Essa decisão deve preparar o produto para evolução futura com upload de fatura, OCR, Open Finance, conciliação e pagamento em lote, sem implementar essas funcionalidades agora.
+
+### Decisão permanente sobre Fluxo de Caixa
+
+- O usuário deve conseguir detalhar tanto saídas quanto entradas.
+- O consultor financeiro precisa explicar a composição dos dois lados do fluxo.
+
+### Decisão permanente de comunicação
+
+O texto da tela de login deve ser:
+
+> Entenda o passado.<br>
+> Planeje o futuro.<br>
+> Decida melhor.
+
+### Decisão provisória
+
+- Após a Sprint de Confiabilidade do MVP, poderá ser criada uma **Sprint de Consolidação do MVP** caso o novo uso real ainda revele inconsistências de linguagem, comportamento, estados financeiros ou padrões visuais.
+- Essa decisão deve ser revisada após a conclusão da sprint atual.
+
 ## Fluxo Git
 
 1. Atualize a `main` local antes de começar.
@@ -76,10 +118,12 @@ Não faça push direto na `main` e não misture refatorações não relacionadas
 
 Ordem planejada para os próximos ciclos:
 
-1. **Trial de 14 dias:** período gratuito, estados de acesso e expiração.
-2. **CPF:** coleta, validação, armazenamento seguro e adequação dos fluxos legais.
-3. **Billing:** cobrança, planos, checkout, webhooks e conciliação de status.
-4. **Gestão de assinatura:** consulta, alteração, cancelamento, renovação e portal do cliente.
-5. **IA V1:** primeira experiência de inteligência artificial baseada nos dados financeiros, com escopo, consentimento e limites claramente definidos.
+1. **Sprint de Confiabilidade do MVP:** aumentar a confiança percebida do usuário antes de Trial, Billing e Gestão de Assinatura, corrigindo problemas de usabilidade e consistência observados em uso real antes da entrada comercial.
+2. **Eventual Sprint de Consolidação do MVP:** ciclo provisório, condicionado à identificação de inconsistências de linguagem, comportamento, estados financeiros ou padrões visuais após o novo uso real. Sua realização será revisada ao final da Sprint de Confiabilidade do MVP.
+3. **Trial de 14 dias:** período gratuito, estados de acesso e expiração.
+4. **Billing:** cobrança, planos, checkout, webhooks e conciliação de status.
+5. **Gestão de assinatura:** consulta, alteração, cancelamento, renovação e portal do cliente.
+6. **CPF:** coleta, validação, armazenamento seguro e adequação dos fluxos legais.
+7. **IA V1:** primeira experiência de inteligência artificial baseada nos dados financeiros, com escopo, consentimento e limites claramente definidos.
 
 Esses itens são roadmap, não funcionalidades disponíveis. Antes de implementá-los, registre decisões de produto, segurança, privacidade, provedor e modelo de dados.

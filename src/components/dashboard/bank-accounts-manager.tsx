@@ -11,8 +11,9 @@ import {
   updateBankAccount,
 } from "@/app/dashboard/actions";
 import { bankThemeMapper } from "@/lib/finance/bank-theme";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import { BANKS } from "@/lib/finance/catalogs";
-import { dateFormatter, formatCurrency, parseDate } from "@/lib/finance/format";
+import { dateFormatter, parseDate } from "@/lib/finance/format";
 import type { AccountTransfer, BankAccount } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
 
@@ -64,7 +65,7 @@ export function BankAccountsManager({
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-moss-400">
               Caixa Centralizado
             </p>
-            <p className="mt-3 text-3xl font-extrabold">{formatCurrency(total)}</p>
+            <CurrencyValue value={total} size="xl" className="mt-3 block font-extrabold" />
             <p className="mt-2 text-xs text-slate-400">
               Soma dos saldos das suas contas bancárias.
             </p>
@@ -118,7 +119,7 @@ export function BankAccountsManager({
                 <p className="mt-1 text-xs opacity-70">
                   {account.account_number ?`Conta ${account.account_number}` : "Conta principal"}
                 </p>
-                <p className="mt-4 text-xl font-extrabold">{formatCurrency(Number(account.balance))}</p>
+                <CurrencyValue value={Number(account.balance)} size="lg" className="mt-4 block font-extrabold" />
               </article>
             );
           })}
@@ -146,7 +147,7 @@ export function BankAccountsManager({
                   </p>
                   <p className="text-xs text-slate-400">{dateFormatter.format(parseDate(transfer.transfer_date))} · transferência interna</p>
                 </div>
-                <p className="text-sm font-extrabold text-blue-600">{formatCurrency(Number(transfer.amount))}</p>
+                <CurrencyValue value={Number(transfer.amount)} size="sm" className="max-w-[45%] text-right font-extrabold text-blue-600 sm:max-w-none" />
                 <button
                   onClick={() => {
                     if (!window.confirm("Excluir e estornar esta transferência?")) return;

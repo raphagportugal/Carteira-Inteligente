@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CreditCardsManager } from "@/components/dashboard/credit-cards-manager";
 import { InstallmentsManager } from "@/components/dashboard/installments-manager";
 import { PageHeading } from "@/components/dashboard/page-heading";
-import { formatCurrency } from "@/lib/finance/format";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import { getInstallmentSchedule } from "@/lib/finance/installment-schedule";
 import { getTransactionCashFlowDate } from "@/lib/finance/transaction-cash-flow";
 import { getCreditCards, getInstallments, getTransactions } from "@/lib/finance/queries";
@@ -26,7 +26,7 @@ export default async function CardsAndInstallmentsPage({ searchParams }: CardsAn
 
   return <>
     <PageHeading eyebrow="Meios de pagamento" title="Cartões e Parcelamentos" description="Gerencie cartões, compras parceladas e a próxima fatura em um único lugar." />
-    <section className="dashboard-card mb-8 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Resumo da próxima fatura</p><div className="mt-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p className="text-2xl font-extrabold">{formatCurrency(nextInvoice)}</p><p className="mt-1 text-xs text-slate-400">{nextDueDate ?`Vencimentos em ${new Date(`${nextDueDate}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}` : "Nenhum vencimento futuro"}</p></div><p className="text-xs text-slate-500">{nextDates.filter((item) => item.date === nextDueDate).length} lançamentos previstos</p></div></section>
+    <section className="dashboard-card mb-8 min-w-0 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-moss-600">Resumo da próxima fatura</p><div className="mt-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div className="min-w-0"><CurrencyValue value={nextInvoice} size="xl" className="font-extrabold" /><p className="mt-1 text-xs text-slate-400">{nextDueDate ?`Vencimentos em ${new Date(`${nextDueDate}T00:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC" })}` : "Nenhum vencimento futuro"}</p></div><p className="text-xs text-slate-500">{nextDates.filter((item) => item.date === nextDueDate).length} lançamentos previstos</p></div></section>
     <details id="gerenciar-cartoes" open={onboarding === "cartao"} className="dashboard-card mt-8 p-5 sm:p-6">
       <summary className="flex cursor-pointer list-none flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>

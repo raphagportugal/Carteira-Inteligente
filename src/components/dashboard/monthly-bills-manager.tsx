@@ -7,7 +7,8 @@ import { createMonthlyBill, deleteMonthlyBill, updateMonthlyBill } from "@/app/d
 import { CategoryIcon } from "@/components/dashboard/category-icon";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { EXPENSE_CATEGORIES, MONTHLY_BILL_STATUSES, PAYMENT_METHODS } from "@/lib/finance/catalogs";
-import { addMonths, dateFormatter, formatCurrency, monthFormatter, parseDate } from "@/lib/finance/format";
+import { addMonths, dateFormatter, monthFormatter, parseDate } from "@/lib/finance/format";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import { getMonthlyBillOccurrence } from "@/lib/finance/monthly-bills";
 import type { BankAccount, CreditCard, MonthlyBill, Transaction } from "@/lib/finance/types";
 import { showSuccess } from "@/lib/ui/feedback";
@@ -110,7 +111,7 @@ export function MonthlyBillsManager({
       ) : (
         <>
           <div className="mb-6 grid gap-4 sm:grid-cols-2">
-            <div className="dashboard-card p-5"><p className="text-xs text-slate-400">Compromisso mensal ativo</p><p className="mt-2 text-xl font-extrabold">{formatCurrency(activeTotal)}</p></div>
+            <div className="dashboard-card min-w-0 p-5"><p className="text-xs text-slate-400">Compromisso mensal ativo</p><CurrencyValue value={activeTotal} size="lg" className="mt-2 block font-extrabold" /></div>
             <div className="dashboard-card p-5"><p className="text-xs text-slate-400">Mensalidades cadastradas</p><p className="mt-2 text-xl font-extrabold">{bills.length}</p></div>
           </div>
           <section className="space-y-4">
@@ -124,7 +125,7 @@ export function MonthlyBillsManager({
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-5 text-sm sm:grid-cols-4">
-                <div><p className="text-[10px] uppercase text-slate-400">Valor</p><p className="mt-1 font-extrabold">{formatCurrency(Number(bill.monthly_amount))}</p></div>
+                <div className="min-w-0"><p className="text-[10px] uppercase text-slate-400">Valor</p><CurrencyValue value={Number(bill.monthly_amount)} size="md" className="mt-1 block font-extrabold" /></div>
                 <div><p className="text-[10px] uppercase text-slate-400">Vencimento</p><p className="mt-1 font-extrabold">Dia {bill.due_day}</p></div>
                 <div><p className="text-[10px] uppercase text-slate-400">Início</p><p className="mt-1 font-extrabold">{dateFormatter.format(parseDate(bill.start_date))}</p></div>
                 <div><p className="text-[10px] uppercase text-slate-400">Pagamento</p><p className="mt-1 font-extrabold">{bill.credit_card_id ?"Cartão" : "Conta"}</p></div>

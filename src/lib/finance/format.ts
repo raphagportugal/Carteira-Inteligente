@@ -3,13 +3,6 @@ export const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-export const compactCurrencyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
 export const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "short",

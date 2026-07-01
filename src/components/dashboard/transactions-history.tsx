@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { CategoryIcon } from "@/components/dashboard/category-icon";
 import { TransactionActions } from "@/components/dashboard/transaction-actions";
-import { dateFormatter, formatCurrency, parseDate } from "@/lib/finance/format";
+import { dateFormatter, parseDate } from "@/lib/finance/format";
+import { CurrencyValue } from "@/components/ui/currency-value";
 import type { BankAccount, CreditCard, Transaction } from "@/lib/finance/types";
 
 export function TransactionsHistory({
@@ -81,9 +82,7 @@ export function TransactionsHistory({
                         {account ?` · ${account.bank}` : ""}
                       </p>
                     </div>
-                    <p className={`text-sm font-extrabold ${income ?"text-emerald-600" : "text-slate-900"}`}>
-                      {income ?"+" : "-"} {formatCurrency(Number(transaction.amount))}
-                    </p>
+                    <CurrencyValue value={Number(transaction.amount)} sign={income ?"+" : "-"} size="sm" className={`max-w-[45%] text-right font-extrabold sm:max-w-none ${income ?"text-emerald-600" : "text-slate-900"}`} />
                     <TransactionActions transaction={transaction} />
                   </div>;
                 })}

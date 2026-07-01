@@ -50,6 +50,18 @@ body {
     @apply rounded-3xl border border-slate-200/80 bg-white shadow-[0_22px_60px_-42px_rgba(15,23,42,0.35)];
   }
 
+  .financial-value {
+    @apply inline-block min-w-0 max-w-full whitespace-normal align-bottom tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 640px) {
+    .financial-value {
+      @apply whitespace-nowrap;
+      overflow-wrap: normal;
+    }
+  }
+
   .brand-label {
     @apply text-[10px] font-extrabold uppercase tracking-[0.22em] text-moss-600;
   }
